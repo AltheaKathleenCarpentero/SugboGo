@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SugboGo</title>
+    
+    <!-- Google Fonts: Cormorant Garamond + DM Sans (as per sugbogo.css) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Main Stylesheet (sugbogo.css only - no site.css needed) -->
+    <link rel="stylesheet" href="~/css/sugbogo.css" asp-append-version="true" />
+</head>
+
+<body>
+    <!-- ================================================== -->
+    <!-- SG-NAV: Modern navbar from sugbogo.css              -->
+    <!-- ================================================== -->
+    <header class="sg-nav">
+        <div class="sg-container sg-nav__inner">
+            <a href="/" class="sg-nav__logo">Sugbo<span>Go</span> 🌴</a>
+            <nav class="sg-nav__links">
+                <a href="/" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Explore" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">Home</a>
+                <a href="/Explore/Tours">Tours</a>
+                <a href="/Explore/Hiking">Hiking</a>
+                <a href="/Explore/Gastronomy">Gastronomy</a>
+                <a href="/Explore/Spots">Spots</a>
+                <a href="/Contact">Contact</a>
+            </nav>
+            <div class="sg-nav__actions">
+                <button class="sg-btn sg-btn--outline sg-btn--sm">Log in</button>
+                <button class="sg-btn sg-btn--primary sg-btn--sm">Book now</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN DYNAMIC CONTENT -->
+    <main>
+        @RenderBody()
+    </main>
+
+    <!-- ================================================== -->
+    <!-- SG-FOOTER: Rich footer from sugbogo.css             -->
+    <!-- ================================================== -->
+    <footer class="sg-footer">
+        <div class="sg-container">
+            <div class="sg-footer__inner">
+                <div class="sg-footer__brand">
+                    <a href="/" class="sg-nav__logo">Sugbo<span>Go</span></a>
+                    <p class="sg-footer__tagline">Authentic Cebu experiences — from island peaks to hidden coastlines.</p>
+                </div>
+                <div class="sg-footer__col">
+                    <div class="sg-footer__col-title">Discover</div>
+                    <ul class="sg-footer__links">
+                        <li><a href="/Explore/Tours">Tours & packages</a></li>
+                        <li><a href="/Explore/Hiking">Hiking trails</a></li>
+                        <li><a href="/Explore/Gastronomy">Food & culinary</a></li>
+                        <li><a href="/Explore/Spots">City spots</a></li>
+                    </ul>
+                </div>
+                <div class="sg-footer__col">
+                    <div class="sg-footer__col-title">Company</div>
+                    <ul class="sg-footer__links">
+                        <li><a href="/About">About SugboGo</a></li>
+                        <li><a href="/Contact">Contact us</a></li>
+                        <li><a href="/Privacy">Privacy policy</a></li>
+                        <li><a href="/Terms">Terms of service</a></li>
+                    </ul>
+                </div>
+                <div class="sg-footer__col">
+                    <div class="sg-footer__col-title">Get in touch</div>
+                    <ul class="sg-footer__links">
+                        <li><a href="mailto:hello@sugbogo.com">hello@sugbogo.com</a></li>
+                        <li><a href="#">+63 (32) 123 4567</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="sg-footer__bottom">
+                <div class="sg-footer__copy">© @DateTime.Now.Year SugboGo — Explore Cebu like a local.</div>
+                <div class="sg-footer__socials">
+                    <a href="#" class="sg-footer__social-link">IG</a>
+                    <a href="#" class="sg-footer__social-link">FB</a>
+                    <a href="#" class="sg-footer__social-link">TW</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
