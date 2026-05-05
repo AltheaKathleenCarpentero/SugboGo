@@ -23,10 +23,8 @@
         </div>
     </div>
     <div class="sg-hero__visual">
-        <!-- Replace this entire div -->
+        <canvas class="sg-mountain-canvas" data-mountain-range aria-hidden="true"></canvas>
         <img class="sg-hero__image" src="~/images/hero-bg.jpg" alt="Kawasan Falls Cebu">
-  
-        <!-- Keep the overlay card -->
         <div class="sg-hero__overlay-card">
             <div class="sg-caption">Local pick</div>
             <div class="sg-heading">Kawasan canyoneering</div>
@@ -54,7 +52,7 @@
 </div>
 
 <!-- ========== FEATURED TOUR PACKAGES ========== -->
-<section class="sg-section">
+<section class="sg-section sg-destination-cinema" data-destination-cinema>
     <div class="sg-container">
         <div class="sg-section-header">
             <div>
@@ -64,11 +62,11 @@
             <a href="/Explore/Tours" class="sg-btn sg-btn--ghost">All tours →</a>
         </div>
 
-        <div class="sg-grid-3">
+        <div class="sg-card-rail" data-card-rail aria-label="Featured Cebu experiences">
             <!-- Card 1: Kawasan -->
-            <article class="sg-tour-card">
-                <div class="sg-tour-card__image">
-                    <div class="sg-tour-card__image-placeholder" style="background: linear-gradient(145deg, #1F6E6E, #0C4B4B); display: flex; align-items: center; justify-content: center; color: white;">🏞️</div>
+            <article class="sg-tour-card" data-destination-card>
+                <div class="sg-tour-card__image sg-image-wipe" data-cinematic-image>
+                    <img src="~/images/hero-bg.jpg" alt="Kawasan Falls canyoneering in Cebu">
                     <span class="sg-tour-card__badge">Best seller</span>
                 </div>
                 <div class="sg-tour-card__body">
@@ -87,9 +85,9 @@
             </article>
 
             <!-- Card 2: Osmeña Peak + Moalboal -->
-            <article class="sg-tour-card">
-                <div class="sg-tour-card__image">
-                    <div class="sg-tour-card__image-placeholder" style="background: linear-gradient(145deg, #2A5F5F, #134141); display: flex; align-items: center; justify-content: center; color: white;">⛰️</div>
+            <article class="sg-tour-card" data-destination-card>
+                <div class="sg-tour-card__image sg-image-wipe sg-image-wipe--reverse" data-cinematic-image>
+                    <img src="~/images/hero-bg.jpg" alt="Osmena Peak and Moalboal sea adventure">
                 </div>
                 <div class="sg-tour-card__body">
                     <div class="sg-tour-card__category">Mountain + sea</div>
@@ -107,9 +105,9 @@
             </article>
 
             <!-- Card 3: Cebu City historical + Lechon -->
-            <article class="sg-tour-card">
-                <div class="sg-tour-card__image">
-                    <div class="sg-tour-card__image-placeholder" style="background: linear-gradient(145deg, #C4614A, #92412F); display: flex; align-items: center; justify-content: center; color: white;">🍖</div>
+            <article class="sg-tour-card" data-destination-card>
+                <div class="sg-tour-card__image sg-image-wipe sg-image-wipe--diagonal" data-cinematic-image>
+                    <img src="~/images/hero-bg.jpg" alt="Cebu city food and heritage tour">
                 </div>
                 <div class="sg-tour-card__body">
                     <div class="sg-tour-card__category">Food & heritage</div>
