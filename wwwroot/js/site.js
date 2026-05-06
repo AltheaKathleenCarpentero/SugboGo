@@ -421,6 +421,98 @@ const initAccountFlow = () => {
     });
 };
 
+const initDashboard = () => {
+    const dashboard = document.querySelector('[data-dashboard]');
+
+    if (!dashboard) {
+        return;
+    }
+
+    const vibeTags = [...dashboard.querySelectorAll('[data-vibe-tag]')];
+    const surpriseButton = dashboard.querySelector('[data-surprise-button]');
+    const surprisePanel = dashboard.querySelector('[data-surprise-panel]');
+    const surpriseTitle = dashboard.querySelector('[data-surprise-title]');
+    const surpriseReason = dashboard.querySelector('[data-surprise-reason]');
+    const gems = [...dashboard.querySelectorAll('[data-surprise-gem]')];
+
+    vibeTags.forEach((tag) => {
+        tag.addEventListener('click', () => {
+            tag.classList.toggle('is-active');
+        });
+    });
+
+    surpriseButton?.addEventListener('click', () => {
+        if (!gems.length || !surprisePanel || !surpriseTitle || !surpriseReason) {
+            return;
+        }
+
+        const index = Math.floor(Math.random() * gems.length);
+        const gem = gems[index];
+
+        gems.forEach((item) => item.classList.remove('is-featured'));
+        gem.classList.add('is-featured');
+        surpriseTitle.textContent = gem.dataset.title || 'A hidden Cebu gem';
+        surpriseReason.textContent = gem.dataset.reason || 'Matched to your travel profile.';
+        surprisePanel.hidden = false;
+        surprisePanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+};
+
+const initAdminDashboard = () => {
+    const admin = document.querySelector('[data-admin-dashboard]');
+
+    if (!admin) {
+        return;
+    }
+
+    const cards = [...admin.querySelectorAll('.admin-kanban-card')];
+    const columns = [...admin.querySelectorAll('.admin-kanban__column')];
+    const approvalButtons = [...admin.querySelectorAll('[data-admin-approve]')];
+
+    cards.forEach((card) => {
+        card.addEventListener('dragstart', () => {
+            card.classList.add('is-dragging');
+        });
+
+        card.addEventListener('dragend', () => {
+            card.classList.remove('is-dragging');
+            columns.forEach((column) => {
+                const count = column.querySelectorAll('.admin-kanban-card').length;
+                const badge = column.querySelector('h3 span');
+
+                if (badge) {
+                    badge.textContent = String(count);
+                }
+            });
+        });
+    });
+
+    columns.forEach((column) => {
+        column.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            const draggingCard = admin.querySelector('.admin-kanban-card.is-dragging');
+
+            if (draggingCard) {
+                column.appendChild(draggingCard);
+            }
+        });
+    });
+
+    approvalButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const row = button.closest('article');
+            const status = row?.querySelector('small');
+
+            button.textContent = 'Approved';
+            button.disabled = true;
+
+            if (status) {
+                status.textContent = 'Approved for itinerary mapping';
+            }
+        });
+    });
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.classList.add('sg-motion-ready');
     initMountainRange();
@@ -428,4 +520,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initLandingPage();
     initBookingFlow();
     initAccountFlow();
+    initDashboard();
+    initAdminDashboard();
 });

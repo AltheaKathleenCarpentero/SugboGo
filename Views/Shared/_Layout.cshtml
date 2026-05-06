@@ -28,6 +28,14 @@
                 <a href="/#bookings">Bookings</a>
                 <a href="/#how">How It Works</a>
                 <a href="/#experiences">Experiences</a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a href="/Dashboard">Dashboard</a>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a href="/Admin">Admin</a>
+                    }
+                }
                 <a href="/#partners">For Developers</a>
             </nav>
             <div class="sg-nav__actions">

@@ -1,0 +1,250 @@
+@model AdminDashboardViewModel
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    var firstGem = Model.Gems.FirstOrDefault();
+    var mapUrl = firstGem is null
+        ? "https://www.openstreetmap.org/export/embed.html?bbox=123.82%2C10.24%2C123.98%2C10.40&layer=mapnik"
+        : $"https://www.openstreetmap.org/export/embed.html?bbox=123.82%2C10.24%2C123.98%2C10.40&layer=mapnik&marker={firstGem.Latitude}%2C{firstGem.Longitude}";
+}
+
+<section class="admin-page" data-admin-dashboard>
+    <aside class="admin-sidebar" aria-label="Admin navigation">
+        <a class="admin-sidebar__brand" href="/Admin">Sogbo<span>Go</span></a>
+        <nav>
+            @foreach (var item in new[] { "Dashboard", "Trip Pipeline", "Gem Vault", "User Directory", "Partner Hub", "Analytics", "Settings" })
+            {
+                <a href="#@item.ToLowerInvariant().Replace(" ", "-")">@item</a>
+            }
+        </nav>
+    </aside>
+
+    <div class="admin-workspace">
+        <header class="admin-top" id="dashboard">
+            <div>
+                <p class="lp-kicker">Admin command center</p>
+                <h1>Global Pulse</h1>
+            </div>
+            <div class="admin-top__meta">
+                <span>Live Ops</span>
+                <strong>@DateTime.Now.ToString("MMM d, h:mm tt")</strong>
+            </div>
+        </header>
+
+        <section class="admin-kpis" aria-label="Business health metrics">
+            @foreach (var kpi in Model.Kpis)
+            {
+                <article>
+                    <span>@kpi.Label</span>
+                    <strong>@kpi.Value</strong>
+                    <p>@kpi.Delta</p>
+                </article>
+            }
+        </section>
+
+        <section class="admin-pulse-grid">
+            <article class="admin-panel admin-trends" aria-label="Vibe trends">
+                <div class="admin-panel__head">
+                    <h2>Vibe Trends</h2>
+                    <span>Current demand</span>
+                </div>
+                <div class="admin-trend-chart">
+                    @foreach (var trend in Model.VibeTrends)
+                    {
+                        <div class="admin-trend-row">
+                            <span>@trend.Vibe</span>
+                            <div><i style="width:@trend.Percentage%"></i></div>
+                            <strong>@trend.Percentage%</strong>
+                        </div>
+                    }
+                </div>
+            </article>
+
+            <article class="admin-panel admin-alerts" aria-label="Urgent alerts">
+                <div class="admin-panel__head">
+                    <h2>Urgent Alerts</h2>
+                    <span>Needs human action</span>
+                </div>
+                @foreach (var alert in Model.UrgentAlerts)
+                {
+                    <div class="admin-alert">
+                        <strong>@alert.Traveler</strong>
+                        <p>@alert.Issue</p>
+                        <span>@alert.Location</span>
+                        <a href="@alert.ChatUrl" target="_blank" rel="noreferrer">Open chat</a>
+                    </div>
+                }
+            </article>
+        </section>
+
+        <section class="admin-section" id="gem-vault">
+            <div class="admin-section__head">
+                <div>
+                    <p class="lp-kicker">Curation Engine</p>
+                    <h2>Gem Database</h2>
+                </div>
+                <button type="button" class="admin-primary">Add Hidden Gem</button>
+            </div>
+
+            <div class="admin-curation-grid">
+                <article class="admin-panel admin-gem-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Score</th>
+                                <th>Quality Check</th>
+                                <th>Contact</th>
+                                <th>GPS</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var gem in Model.Gems)
+                            {
+                                <tr>
+                                    <td>@gem.Name</td>
+                                    <td>@gem.Category</td>
+                                    <td>@gem.FlashpackerScore/10</td>
+                                    <td>@gem.QualityCheckDate</td>
+                                    <td>@gem.ContactPerson</td>
+                                    <td>@gem.Latitude, @gem.Longitude</td>
+                                    <td><span class="admin-status">@gem.Status</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </article>
+
+                <article class="admin-panel admin-map-panel">
+                    <div class="admin-panel__head">
+                        <h2>Itinerary Mapper</h2>
+                        <span>Route optimization view</span>
+                    </div>
+                    <div class="admin-map">
+                        <iframe title="Admin Cebu gem map" src="@mapUrl" loading="lazy"></iframe>
+                        <div class="admin-map__pins" aria-hidden="true">
+                            @foreach (var gem in Model.Gems)
+                            {
+                                <span style="--x:@gem.MapX%; --y:@gem.MapY%;">@gem.FlashpackerScore</span>
+                            }
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="admin-section">
+            <div class="admin-section__head">
+                <div>
+                    <p class="lp-kicker">Template Library</p>
+                    <h2>Base itineraries</h2>
+                </div>
+            </div>
+            <div class="admin-template-grid">
+                @foreach (var template in Model.Templates)
+                {
+                    <article class="admin-panel admin-template" draggable="true">
+                        <span>@template.Vibe</span>
+                        <h3>@template.Name</h3>
+                        <p>@template.Stops</p>
+                        <small>@template.AvgDuration</small>
+                    </article>
+                }
+            </div>
+        </section>
+
+        <section class="admin-section" id="trip-pipeline">
+            <div class="admin-section__head">
+                <div>
+                    <p class="lp-kicker">Booking Pipeline</p>
+                    <h2>Request to completed trip</h2>
+                </div>
+            </div>
+            <div class="admin-kanban" data-admin-kanban>
+                @foreach (var column in Model.Pipeline)
+                {
+                    <section class="admin-kanban__column">
+                        <h3>@column.Name <span>@column.Cards.Count</span></h3>
+                        @foreach (var card in column.Cards)
+                        {
+                            <article class="admin-kanban-card" draggable="true">
+                                <strong>@card.Traveler</strong>
+                                <span>@card.Vibe</span>
+                                <p>@card.TravelWindow</p>
+                                <small>@card.Priority</small>
+                            </article>
+                        }
+                    </section>
+                }
+            </div>
+        </section>
+
+        <section class="admin-section" id="user-directory">
+            <div class="admin-section__head">
+                <div>
+                    <p class="lp-kicker">CRM</p>
+                    <h2>User and profile management</h2>
+                </div>
+            </div>
+            <div class="admin-crm-grid">
+                @foreach (var user in Model.Flashpackers)
+                {
+                    <article class="admin-panel admin-persona">
+                        <span>@user.Vibe</span>
+                        <h3>@user.Name</h3>
+                        <p>@user.Constraints</p>
+                        <blockquote>@user.Feedback</blockquote>
+                        <small>@user.CebuTrips repeat Cebu trip@(user.CebuTrips == 1 ? "" : "s")</small>
+                    </article>
+                }
+            </div>
+        </section>
+
+        <section class="admin-section" id="partner-hub">
+            <div class="admin-section__head">
+                <div>
+                    <p class="lp-kicker">Partner Hub</p>
+                    <h2>Vendors, commissions, and quality audits</h2>
+                </div>
+            </div>
+            <div class="admin-partner-grid">
+                @foreach (var partner in Model.Partners)
+                {
+                    <article class="admin-panel admin-partner">
+                        <span>@partner.Type</span>
+                        <h3>@partner.Name</h3>
+                        <p>Contact: @partner.Contact</p>
+                        <p>Commission: @partner.Commission</p>
+                        <p>Last audit: @partner.LastAudit</p>
+                        <strong>@partner.Status</strong>
+                    </article>
+                }
+            </div>
+        </section>
+
+        <section class="admin-section admin-collab">
+            <div class="admin-section__head">
+                <div>
+                    <p class="lp-kicker">Collaboration Mode</p>
+                    <h2>Local expert suggestions awaiting admin approval</h2>
+                </div>
+            </div>
+            <div class="admin-collab-list">
+                @foreach (var suggestion in Model.CollaborationQueue)
+                {
+                    <article class="admin-panel">
+                        <span>@suggestion.SuggestedBy</span>
+                        <h3>@suggestion.Spot</h3>
+                        <p>@suggestion.Reason</p>
+                        <div>
+                            <button type="button" class="admin-primary" data-admin-approve>Approve</button>
+                            <small>@suggestion.ApprovalStatus</small>
+                        </div>
+                    </article>
+                }
+            </div>
+        </section>
+    </div>
+</section>

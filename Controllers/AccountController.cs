@@ -11,11 +11,13 @@ public sealed class AccountController : Controller
 {
     private readonly IUserAccountStore _userStore;
     private readonly IPasswordService _passwordService;
+    private readonly IAccountRoleService _accountRoleService;
 
-    public AccountController(IUserAccountStore userStore, IPasswordService passwordService)
+    public AccountController(IUserAccountStore userStore, IPasswordService passwordService, IAccountRoleService accountRoleService)
     {
         _userStore = userStore;
         _passwordService = passwordService;
+        _accountRoleService = accountRoleService;
     }
 
     [HttpGet]
@@ -71,7 +73,7 @@ public sealed class AccountController : Controller
         }
 
         await SignUserInAsync(user);
-        return RedirectToAction("Index", "Booking");
+        return RedirectToRoleHome(user);
     }
 
     [HttpGet]
@@ -104,7 +106,8 @@ public sealed class AccountController : Controller
         {
             Email = email,
             FullName = model.FullName.Trim(),
-            PasswordHash = _passwordService.HashPassword(model.Password)
+            PasswordHash = _passwordService.HashPassword(model.Password),
+            Role = _accountRoleService.GetRegistrationRole(email)
         };
 
         try
@@ -118,7 +121,7 @@ public sealed class AccountController : Controller
         }
 
         await SignUserInAsync(user);
-        return RedirectToAction("Index", "Booking");
+        return RedirectToRoleHome(user);
     }
 
     [HttpGet]
@@ -151,13 +154,22 @@ public sealed class AccountController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpGet]
+    public IActionResult AccessDenied()
+    {
+        ViewData["Title"] = "Access denied";
+        return View();
+    }
+
     private async Task SignUserInAsync(UserAccount user)
     {
+        var role = _accountRoleService.ResolveEffectiveRole(user.Email, user.Role);
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id),
             new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.Name, user.FullName)
+            new(ClaimTypes.Name, user.FullName),
+            new(ClaimTypes.Role, role)
         };
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);
@@ -166,6 +178,14 @@ public sealed class AccountController : Controller
             CookieAuthenticationDefaults.AuthenticationScheme,
             principal,
             new AuthenticationProperties { IsPersistent = true });
+    }
+
+    private IActionResult RedirectToRoleHome(UserAccount user)
+    {
+        var role = _accountRoleService.ResolveEffectiveRole(user.Email, user.Role);
+        return role == AccountRoles.Admin
+            ? RedirectToAction("Index", "Admin")
+            : RedirectToAction("Index", "Dashboard");
     }
 
     private static string NormalizeEmail(string email) => (email ?? string.Empty).Trim().ToLowerInvariant();
