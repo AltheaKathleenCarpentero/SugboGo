@@ -1,0 +1,39 @@
+@model SignInViewModel
+
+@{
+    ViewData["Title"] = "Enter your password";
+}
+
+<section class="auth-page">
+    <div class="auth-panel lp-reveal">
+        <a class="auth-back" asp-controller="Account" asp-action="Index">Back</a>
+        <div class="auth-brand">Sogbo<span>Go</span></div>
+        <h1>Welcome back</h1>
+        <p class="auth-subtitle">@Model.Email</p>
+
+        @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+        {
+            <div class="auth-alert" role="alert">@Model.ErrorMessage</div>
+        }
+
+        <form class="auth-form" asp-controller="Account" asp-action="SignIn" method="post">
+            @Html.AntiForgeryToken()
+            <input asp-for="Email" type="hidden" />
+
+            <label asp-for="Password">Password or one-time passcode</label>
+            <input asp-for="Password" type="password" placeholder="Enter your password" autocomplete="current-password" autofocus />
+            <span class="auth-validation" asp-validation-for="Password"></span>
+
+            <button class="auth-primary" type="submit">Sign in</button>
+        </form>
+
+        <p class="auth-recovery">
+            Need help?
+            <a asp-controller="Account" asp-action="Recover">Recover your account</a>
+        </p>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

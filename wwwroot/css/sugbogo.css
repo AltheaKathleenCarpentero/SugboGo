@@ -2246,3 +2246,841 @@ button {
         transform: none;
     }
 }
+
+/* ============================================================
+   Booking Flow
+   ============================================================ */
+.booking-flow {
+    min-height: calc(100vh - 68px);
+    background:
+        linear-gradient(180deg, oklch(0.998 0.006 94), oklch(0.965 0.018 205)),
+        var(--lp-paper);
+    color: var(--lp-ink);
+}
+
+.booking-shell {
+    width: min(1180px, calc(100% - clamp(32px, 7vw, 96px)));
+    margin-inline: auto;
+    padding-block: clamp(54px, 8vw, 104px);
+}
+
+.booking-hero {
+    margin-bottom: 26px;
+}
+
+.booking-hero__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+    gap: clamp(28px, 6vw, 72px);
+    align-items: end;
+}
+
+.booking-hero h1,
+.flash-checkout h2,
+.success-state h2 {
+    max-width: 780px;
+    margin: 0;
+    color: var(--lp-ink);
+    font-family: var(--lp-font-head);
+    font-size: clamp(2.4rem, 6vw, 5.6rem);
+    font-weight: 700;
+    line-height: 0.98;
+    letter-spacing: 0;
+}
+
+.booking-hero p:not(.lp-kicker),
+.success-state__copy p {
+    max-width: 650px;
+    margin: 18px 0 0;
+    color: var(--lp-muted);
+    font-size: 1.05rem;
+    line-height: 1.7;
+}
+
+.booking-summary {
+    display: grid;
+    gap: 6px;
+    padding: 24px;
+    border: 1px solid color-mix(in oklch, var(--lp-teal), var(--lp-line) 60%);
+    border-radius: 8px;
+    background: oklch(0.998 0.006 94);
+    box-shadow: 0 18px 44px rgba(30, 58, 138, 0.08);
+}
+
+.booking-summary span,
+.digital-pass span {
+    color: var(--lp-teal);
+    font-family: var(--lp-font-head);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.booking-summary strong {
+    color: var(--lp-blue);
+    font-family: var(--lp-font-head);
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.booking-summary small,
+.journey-item__actions span,
+.payment-recap li,
+.digital-pass strong {
+    color: var(--lp-muted);
+}
+
+.booking-progress {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: clamp(28px, 4vw, 44px);
+    padding: 6px;
+    border: 1px solid var(--lp-line);
+    border-radius: 8px;
+    background: oklch(0.99 0.008 94);
+}
+
+.booking-progress span {
+    display: grid;
+    min-height: 42px;
+    place-items: center;
+    border-radius: 6px;
+    color: var(--lp-muted);
+    font-family: var(--lp-font-head);
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.booking-progress span.is-active {
+    background: var(--lp-blue);
+    color: oklch(0.99 0.006 94);
+    box-shadow: 0 12px 26px rgba(30, 58, 138, 0.2);
+}
+
+.booking-stage {
+    display: none;
+    opacity: 0;
+    transform: translateY(18px);
+}
+
+.booking-stage.is-active {
+    display: block;
+    animation: booking-stage-in 460ms var(--lp-ease) forwards;
+}
+
+.journey-layout,
+.flash-checkout,
+.success-state {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+    gap: clamp(26px, 5vw, 58px);
+    align-items: start;
+}
+
+.journey-timeline {
+    position: relative;
+    display: grid;
+    gap: 18px;
+}
+
+.journey-timeline::before {
+    content: "";
+    position: absolute;
+    left: 25px;
+    top: 24px;
+    bottom: 24px;
+    width: 2px;
+    background: linear-gradient(var(--lp-blue), var(--lp-teal));
+}
+
+.journey-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 18px;
+}
+
+.journey-item__pin {
+    position: relative;
+    z-index: 1;
+    padding-top: 8px;
+}
+
+.journey-item__pin span {
+    display: grid;
+    width: 52px;
+    height: 52px;
+    place-items: center;
+    border: 1px solid color-mix(in oklch, var(--lp-blue), oklch(0.99 0.006 94) 36%);
+    border-radius: 50%;
+    background: oklch(0.99 0.006 94);
+    color: var(--lp-blue);
+    font-family: var(--lp-font-head);
+    font-weight: 800;
+    box-shadow: 0 12px 24px rgba(30, 58, 138, 0.1);
+}
+
+.journey-item__body,
+.checkout-panel,
+.flash-checkout__form,
+.payment-recap,
+.digital-pass {
+    border: 1px solid var(--lp-line);
+    border-radius: 8px;
+    background: oklch(0.998 0.006 94);
+    box-shadow: 0 2px 14px rgba(30, 58, 138, 0.05);
+}
+
+.journey-item__body {
+    padding: clamp(20px, 3vw, 28px);
+    transition: border-color 260ms var(--lp-ease), box-shadow 260ms var(--lp-ease), transform 260ms var(--lp-ease);
+}
+
+.journey-item__body:hover {
+    border-color: color-mix(in oklch, var(--lp-teal), var(--lp-line));
+    box-shadow: 0 18px 42px rgba(30, 58, 138, 0.1);
+    transform: translateY(-2px);
+}
+
+.journey-item__topline,
+.journey-item__main,
+.journey-item__actions,
+.checkout-panel dl div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.journey-item__topline {
+    margin-bottom: 14px;
+}
+
+.journey-item__topline span {
+    color: var(--lp-teal);
+    font-family: var(--lp-font-head);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.journey-item__main {
+    align-items: start;
+}
+
+.journey-item h2 {
+    margin: 0;
+    color: var(--lp-ink);
+    font-family: var(--lp-font-head);
+    font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+    font-weight: 700;
+    line-height: 1.18;
+}
+
+.journey-item__main p {
+    margin: 7px 0 0;
+    color: var(--lp-muted);
+}
+
+.journey-item__main strong {
+    color: var(--lp-blue);
+    font-family: var(--lp-font-head);
+    white-space: nowrap;
+}
+
+.journey-details {
+    margin-top: 18px;
+    border-top: 1px solid var(--lp-line);
+}
+
+.journey-details summary {
+    display: inline-flex;
+    margin-top: 16px;
+    color: var(--lp-blue);
+    font-family: var(--lp-font-head);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.journey-details p {
+    max-width: 62ch;
+    margin: 12px 0 8px;
+    color: var(--lp-muted);
+    line-height: 1.66;
+}
+
+.journey-details small {
+    color: var(--lp-ink);
+}
+
+.journey-item__actions {
+    margin-top: 18px;
+    align-items: center;
+}
+
+.booking-link-btn {
+    display: inline-flex;
+    min-height: 40px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid color-mix(in oklch, var(--lp-teal), var(--lp-line));
+    border-radius: 6px;
+    padding: 0 15px;
+    color: var(--lp-blue);
+    font-family: var(--lp-font-head);
+    font-weight: 700;
+    transition: background-color 260ms var(--lp-ease), color 260ms var(--lp-ease), transform 260ms var(--lp-ease);
+}
+
+.booking-link-btn:hover {
+    background: var(--lp-teal);
+    color: oklch(0.99 0.006 94);
+    transform: translateY(-1px);
+}
+
+.checkout-panel,
+.payment-recap {
+    position: sticky;
+    top: 92px;
+    padding: 24px;
+}
+
+.checkout-panel h2 {
+    margin: 0 0 20px;
+    color: var(--lp-ink);
+    font-family: var(--lp-font-head);
+    font-size: 1.45rem;
+}
+
+.checkout-panel dl {
+    display: grid;
+    gap: 14px;
+    margin: 0 0 24px;
+}
+
+.checkout-panel dt,
+.checkout-panel p,
+.payment-recap li {
+    color: var(--lp-muted);
+}
+
+.checkout-panel dd {
+    color: var(--lp-ink);
+    font-weight: 700;
+}
+
+.checkout-panel p {
+    margin: 16px 0 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+.booking-primary {
+    display: inline-flex;
+    width: 100%;
+    min-height: 52px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: var(--lp-blue);
+    color: oklch(0.99 0.006 94);
+    font-family: var(--lp-font-head);
+    font-weight: 800;
+    transition: transform 260ms var(--lp-ease), box-shadow 260ms var(--lp-ease), background-color 260ms var(--lp-ease);
+}
+
+.booking-primary:hover {
+    background: var(--lp-blue-deep);
+    color: oklch(0.99 0.006 94);
+    box-shadow: 0 18px 38px rgba(30, 58, 138, 0.24);
+    transform: translateY(-2px);
+}
+
+.flash-checkout__form {
+    padding: clamp(24px, 4vw, 42px);
+}
+
+.flash-checkout h2 {
+    margin-bottom: 26px;
+    font-size: clamp(2rem, 4vw, 3.8rem);
+}
+
+.quick-pay {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.quick-pay button {
+    min-height: 54px;
+    border-radius: 6px;
+    background: var(--lp-ink);
+    color: oklch(0.99 0.006 94);
+    font-family: var(--lp-font-head);
+    font-weight: 800;
+    transition: transform 260ms var(--lp-ease), background-color 260ms var(--lp-ease);
+}
+
+.quick-pay button:nth-child(2) {
+    background: var(--lp-teal);
+}
+
+.quick-pay button:nth-child(3) {
+    background: var(--lp-blue);
+}
+
+.quick-pay button:hover {
+    transform: translateY(-2px);
+}
+
+.booking-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 28px 0;
+    color: var(--lp-muted);
+    font-size: 0.84rem;
+}
+
+.booking-divider::before,
+.booking-divider::after {
+    content: "";
+    height: 1px;
+    flex: 1;
+    background: var(--lp-line);
+}
+
+.checkout-form {
+    display: grid;
+    gap: 16px;
+}
+
+.checkout-form label {
+    display: grid;
+    gap: 7px;
+    color: var(--lp-ink);
+    font-family: var(--lp-font-head);
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+.checkout-form input {
+    width: 100%;
+    min-height: 50px;
+    border: 1px solid var(--lp-line);
+    border-radius: 6px;
+    background: oklch(0.99 0.006 94);
+    color: var(--lp-ink);
+    font: 500 1rem var(--font-body);
+    padding: 0 14px;
+    transition: border-color 220ms var(--lp-ease), box-shadow 220ms var(--lp-ease);
+}
+
+.checkout-form input:focus {
+    border-color: var(--lp-teal);
+    box-shadow: 0 0 0 4px color-mix(in oklch, var(--lp-teal), transparent 82%);
+    outline: none;
+}
+
+.checkout-form__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.payment-recap ul {
+    display: grid;
+    gap: 14px;
+    margin: 18px 0 28px;
+    padding: 0;
+}
+
+.payment-recap li {
+    list-style: none;
+    line-height: 1.6;
+}
+
+.payment-recap li::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 10px;
+    border-radius: 50%;
+    background: var(--lp-teal);
+}
+
+.success-state {
+    align-items: center;
+    min-height: 560px;
+    padding: clamp(28px, 5vw, 56px);
+    border-radius: 8px;
+    background:
+        linear-gradient(135deg, rgba(13, 148, 136, 0.1), rgba(30, 58, 138, 0.08)),
+        oklch(0.998 0.006 94);
+    box-shadow: 0 24px 64px rgba(30, 58, 138, 0.12);
+}
+
+.success-state__copy .booking-primary {
+    width: auto;
+    margin-top: 28px;
+    padding-inline: 24px;
+}
+
+.pass-stack {
+    display: grid;
+    gap: 14px;
+    width: 100%;
+}
+
+.digital-pass {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px 18px;
+    align-items: center;
+    padding: 18px;
+    transform: rotate(var(--pass-rotate, 0deg));
+}
+
+.digital-pass:nth-child(1) {
+    --pass-rotate: -2deg;
+}
+
+.digital-pass:nth-child(2) {
+    --pass-rotate: 1.5deg;
+}
+
+.digital-pass:nth-child(3) {
+    --pass-rotate: -0.6deg;
+}
+
+.digital-pass strong {
+    display: block;
+    color: var(--lp-blue);
+    font-family: var(--lp-font-head);
+    font-size: 1.35rem;
+}
+
+.qr-preview {
+    display: grid;
+    width: 92px;
+    height: 92px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    padding: 8px;
+    border: 1px solid var(--lp-line);
+    border-radius: 6px;
+    background: oklch(0.99 0.006 94);
+}
+
+.qr-preview i {
+    border-radius: 2px;
+    background: color-mix(in oklch, var(--lp-blue), transparent 88%);
+}
+
+.qr-preview i.is-filled {
+    background: var(--lp-blue);
+}
+
+@keyframes booking-stage-in {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 980px) {
+    .booking-hero__grid,
+    .journey-layout,
+    .flash-checkout,
+    .success-state {
+        grid-template-columns: 1fr;
+    }
+
+    .checkout-panel,
+    .payment-recap {
+        position: static;
+    }
+}
+
+@media (max-width: 640px) {
+    .booking-shell {
+        width: min(100% - 32px, 1180px);
+    }
+
+    .booking-progress {
+        grid-template-columns: 1fr;
+    }
+
+    .journey-item {
+        grid-template-columns: 42px minmax(0, 1fr);
+        gap: 14px;
+    }
+
+    .journey-timeline::before {
+        left: 20px;
+    }
+
+    .journey-item__pin span {
+        width: 42px;
+        height: 42px;
+    }
+
+    .journey-item__main,
+    .journey-item__actions {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .journey-item__main strong {
+        white-space: normal;
+    }
+
+    .quick-pay,
+    .checkout-form__row {
+        grid-template-columns: 1fr;
+    }
+
+    .success-state {
+        padding: 22px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .booking-stage.is-active {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ============================================================
+   Account Flow
+   ============================================================ */
+.sg-nav__user {
+    max-width: 140px;
+    overflow: hidden;
+    color: var(--lp-muted);
+    font-size: 0.84rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sg-nav__logout {
+    margin: 0;
+}
+
+.auth-page {
+    display: grid;
+    min-height: calc(100vh - 68px);
+    place-items: start center;
+    padding: clamp(48px, 8vw, 92px) 20px;
+    background:
+        linear-gradient(180deg, oklch(0.998 0.006 94), oklch(0.965 0.018 205)),
+        var(--lp-paper);
+    color: var(--lp-ink);
+}
+
+.auth-panel {
+    width: min(100%, 430px);
+    padding: clamp(26px, 4vw, 38px);
+    border: 1px solid var(--lp-line);
+    border-radius: 8px;
+    background: oklch(0.998 0.006 94);
+    box-shadow: 0 22px 54px rgba(30, 58, 138, 0.1);
+}
+
+.auth-brand {
+    margin-bottom: 18px;
+    color: var(--lp-blue);
+    font-family: var(--lp-font-head);
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.auth-brand span {
+    color: var(--lp-teal);
+}
+
+.auth-panel h1 {
+    margin: 0 0 24px;
+    color: var(--lp-ink);
+    font-family: var(--lp-font-head);
+    font-size: clamp(1.55rem, 5vw, 2rem);
+    font-weight: 800;
+    line-height: 1.16;
+    letter-spacing: 0;
+}
+
+.auth-subtitle {
+    margin: -12px 0 22px;
+    color: var(--lp-muted);
+    line-height: 1.62;
+}
+
+.auth-form {
+    display: grid;
+    gap: 10px;
+}
+
+.auth-form label {
+    color: var(--lp-ink);
+    font-family: var(--lp-font-head);
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.auth-form input {
+    width: 100%;
+    min-height: 52px;
+    border: 1px solid color-mix(in oklch, var(--lp-line), var(--lp-blue) 8%);
+    border-radius: 6px;
+    background: oklch(0.99 0.006 94);
+    color: var(--lp-ink);
+    font: 500 1rem var(--font-body);
+    padding: 0 14px;
+    transition: border-color 220ms var(--lp-ease), box-shadow 220ms var(--lp-ease), background-color 220ms var(--lp-ease);
+}
+
+.auth-form input[readonly] {
+    background: oklch(0.965 0.014 205);
+    color: var(--lp-muted);
+}
+
+.auth-form input:focus {
+    border-color: var(--lp-blue);
+    box-shadow: 0 0 0 4px color-mix(in oklch, var(--lp-blue), transparent 84%);
+    outline: none;
+}
+
+.auth-validation {
+    min-height: 18px;
+    color: oklch(0.52 0.18 28);
+    font-size: 0.82rem;
+    line-height: 1.3;
+}
+
+.auth-primary {
+    display: inline-flex;
+    width: 100%;
+    min-height: 52px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: var(--lp-blue);
+    color: oklch(0.99 0.006 94);
+    font-family: var(--lp-font-head);
+    font-weight: 800;
+    transition: transform 260ms var(--lp-ease), box-shadow 260ms var(--lp-ease), background-color 260ms var(--lp-ease);
+}
+
+.auth-primary:hover {
+    background: var(--lp-blue-deep);
+    box-shadow: 0 16px 34px rgba(30, 58, 138, 0.24);
+    transform: translateY(-1px);
+}
+
+.auth-primary.is-loading {
+    pointer-events: none;
+    opacity: 0.78;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 26px 0 18px;
+    color: var(--lp-muted);
+    font-size: 0.86rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    height: 1px;
+    flex: 1;
+    background: var(--lp-line);
+}
+
+.auth-socials {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.auth-socials button {
+    display: grid;
+    min-height: 54px;
+    place-items: center;
+    border: 1px solid var(--lp-line);
+    border-radius: 6px;
+    background: oklch(0.998 0.006 94);
+    color: var(--lp-ink);
+    font-family: var(--lp-font-head);
+    font-weight: 800;
+    transition: border-color 220ms var(--lp-ease), transform 220ms var(--lp-ease), box-shadow 220ms var(--lp-ease);
+}
+
+.auth-socials button:hover {
+    border-color: var(--lp-teal);
+    box-shadow: 0 10px 24px rgba(13, 148, 136, 0.12);
+    transform: translateY(-1px);
+}
+
+.auth-recovery {
+    margin: 24px 0 0;
+    color: var(--lp-muted);
+    font-size: 0.9rem;
+    line-height: 1.55;
+    text-align: center;
+}
+
+.auth-recovery a,
+.auth-back {
+    color: var(--lp-blue);
+    font-weight: 800;
+}
+
+.auth-back {
+    display: inline-flex;
+    margin-bottom: 18px;
+    font-size: 0.9rem;
+}
+
+.auth-alert {
+    margin-bottom: 18px;
+    border: 1px solid color-mix(in oklch, oklch(0.62 0.18 28), var(--lp-line));
+    border-radius: 6px;
+    background: oklch(0.975 0.035 28);
+    color: oklch(0.36 0.14 28);
+    padding: 12px 14px;
+    line-height: 1.5;
+}
+
+.auth-alert--success {
+    border-color: color-mix(in oklch, var(--lp-teal), var(--lp-line));
+    background: oklch(0.965 0.035 184);
+    color: var(--lp-teal);
+}
+
+@media (max-width: 640px) {
+    .auth-page {
+        place-items: start center;
+        padding-inline: 16px;
+    }
+
+    .auth-panel {
+        padding: 24px;
+    }
+
+    .auth-socials {
+        grid-template-columns: 1fr;
+    }
+
+    .sg-nav__user {
+        display: none;
+    }
+}

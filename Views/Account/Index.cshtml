@@ -1,0 +1,40 @@
+@model EmailEntryViewModel
+
+@{
+    ViewData["Title"] = "Sign in or create an account";
+}
+
+<section class="auth-page">
+    <div class="auth-panel lp-reveal">
+        <div class="auth-brand">Sogbo<span>Go</span></div>
+        <h1>Sign in or create an account</h1>
+
+        <form class="auth-form" asp-controller="Account" asp-action="CheckEmail" method="post" data-auth-email-form>
+            @Html.AntiForgeryToken()
+            <label asp-for="Email">Email address</label>
+            <input asp-for="Email" type="email" placeholder="Enter your email address" autocomplete="email" autofocus />
+            <span class="auth-validation" asp-validation-for="Email"></span>
+            <button class="auth-primary" type="submit">Continue with email</button>
+        </form>
+
+        <div class="auth-divider"><span>or use one of these options</span></div>
+
+        <div class="auth-socials" aria-label="Social sign in options">
+            <button type="button" aria-label="Continue with Google">
+                <span>G</span>
+            </button>
+            <button type="button" aria-label="Continue with Apple">
+                <span>Apple</span>
+            </button>
+        </div>
+
+        <p class="auth-recovery">
+            Lost access to your email?
+            <a asp-controller="Account" asp-action="Recover">Recover your account</a>
+        </p>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
