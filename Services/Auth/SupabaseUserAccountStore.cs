@@ -33,7 +33,7 @@ public sealed class SupabaseUserAccountStore : IUserAccountStore
     public async Task<UserAccount?> FindByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         var encodedEmail = Uri.EscapeDataString(email.Trim().ToLowerInvariant());
-        using var response = await _httpClient.GetAsync($"{_options.UsersTable}?email=eq.{encodedEmail}&select=id,email,full_name,password_hash,created_at&limit=1", cancellationToken);
+        using var response = await _httpClient.GetAsync($"{_options.UsersTable}?email=eq.{encodedEmail}&select=id,email,full_name,password_hash,role,created_at&limit=1", cancellationToken);
 
         response.EnsureSuccessStatusCode();
 
@@ -49,6 +49,7 @@ public sealed class SupabaseUserAccountStore : IUserAccountStore
                 Email = row.Email,
                 FullName = row.FullName,
                 PasswordHash = row.PasswordHash,
+                Role = AccountRoles.Normalize(row.Role),
                 CreatedAt = row.CreatedAt
             };
     }
@@ -63,6 +64,7 @@ public sealed class SupabaseUserAccountStore : IUserAccountStore
             Email = account.Email,
             FullName = account.FullName,
             PasswordHash = account.PasswordHash,
+            Role = AccountRoles.Normalize(account.Role),
             CreatedAt = account.CreatedAt
         };
 
@@ -85,6 +87,9 @@ public sealed class SupabaseUserAccountStore : IUserAccountStore
 
         [JsonPropertyName("password_hash")]
         public string PasswordHash { get; set; } = string.Empty;
+
+        [JsonPropertyName("role")]
+        public string Role { get; set; } = AccountRoles.Client;
 
         [JsonPropertyName("created_at")]
         public DateTimeOffset CreatedAt { get; set; }

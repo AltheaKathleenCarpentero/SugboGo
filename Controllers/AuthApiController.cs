@@ -13,11 +13,13 @@ public sealed class AuthApiController : ControllerBase
 {
     private readonly IUserAccountStore _userStore;
     private readonly IPasswordService _passwordService;
+    private readonly IAccountRoleService _accountRoleService;
 
-    public AuthApiController(IUserAccountStore userStore, IPasswordService passwordService)
+    public AuthApiController(IUserAccountStore userStore, IPasswordService passwordService, IAccountRoleService accountRoleService)
     {
         _userStore = userStore;
         _passwordService = passwordService;
+        _accountRoleService = accountRoleService;
     }
 
     [HttpPost("check-email")]
@@ -63,13 +65,14 @@ public sealed class AuthApiController : ControllerBase
         {
             Email = email,
             FullName = request.FullName.Trim(),
-            PasswordHash = _passwordService.HashPassword(request.Password)
+            PasswordHash = _passwordService.HashPassword(request.Password),
+            Role = _accountRoleService.GetRegistrationRole(email)
         };
 
         await _userStore.CreateAsync(user, cancellationToken);
         await SignUserInAsync(user);
 
-        return Created("/api/auth/session", new { user.Id, user.Email, user.FullName });
+        return Created("/api/auth/session", new { user.Id, user.Email, user.FullName, Role = _accountRoleService.ResolveEffectiveRole(user.Email, user.Role) });
     }
 
     [HttpPost("sign-in")]
@@ -83,7 +86,7 @@ public sealed class AuthApiController : ControllerBase
         }
 
         await SignUserInAsync(user);
-        return Ok(new { user.Id, user.Email, user.FullName });
+        return Ok(new { user.Id, user.Email, user.FullName, Role = _accountRoleService.ResolveEffectiveRole(user.Email, user.Role) });
     }
 
     [HttpGet("session")]
@@ -101,7 +104,8 @@ public sealed class AuthApiController : ControllerBase
             {
                 id = User.FindFirstValue(ClaimTypes.NameIdentifier),
                 email = User.FindFirstValue(ClaimTypes.Email),
-                fullName = User.FindFirstValue(ClaimTypes.Name)
+                fullName = User.FindFirstValue(ClaimTypes.Name),
+                role = User.FindFirstValue(ClaimTypes.Role)
             }
         });
     }
@@ -115,11 +119,13 @@ public sealed class AuthApiController : ControllerBase
 
     private async Task SignUserInAsync(UserAccount user)
     {
+        var role = _accountRoleService.ResolveEffectiveRole(user.Email, user.Role);
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id),
             new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.Name, user.FullName)
+            new(ClaimTypes.Name, user.FullName),
+            new(ClaimTypes.Role, role)
         };
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 

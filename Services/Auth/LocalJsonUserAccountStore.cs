@@ -22,7 +22,14 @@ public sealed class LocalJsonUserAccountStore : IUserAccountStore
         try
         {
             var users = await ReadUsersAsync(cancellationToken);
-            return users.FirstOrDefault(user => NormalizeEmail(user.Email) == normalizedEmail);
+            var user = users.FirstOrDefault(user => NormalizeEmail(user.Email) == normalizedEmail);
+
+            if (user is not null)
+            {
+                user.Role = AccountRoles.Normalize(user.Role);
+            }
+
+            return user;
         }
         finally
         {
@@ -33,6 +40,7 @@ public sealed class LocalJsonUserAccountStore : IUserAccountStore
     public async Task<UserAccount> CreateAsync(UserAccount account, CancellationToken cancellationToken = default)
     {
         account.Email = NormalizeEmail(account.Email);
+        account.Role = AccountRoles.Normalize(account.Role);
 
         await FileLock.WaitAsync(cancellationToken);
         try
