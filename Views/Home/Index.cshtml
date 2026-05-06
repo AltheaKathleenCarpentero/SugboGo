@@ -1,8 +1,265 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Explore Cebu, Curated";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="lp-hero" id="top">
+    <div class="lp-hero__media" aria-hidden="true">
+        <img src="/images/hero-bg.jpg" alt="" />
+    </div>
+    <div class="lp-hero__shade"></div>
+    <div class="lp-container lp-hero__inner">
+        <div class="lp-hero__copy">
+            <p class="lp-kicker lp-reveal">SogboGo: Explore Cebu, Curated</p>
+            <h1 class="lp-hero__title lp-reveal">Discover Cebu Beyond the Obvious</h1>
+            <p class="lp-hero__tagline lp-reveal">Where Flashpackers Discover Hidden Gems</p>
+            <p class="lp-hero__text lp-reveal">SogboGo curates hidden gems, authentic local spots, and tailored itineraries for flashpackers who want adventure with comfort.</p>
+            <div class="lp-actions lp-reveal">
+                <a class="lp-btn lp-btn--primary" href="#experiences">Start Your Curated Journey</a>
+                <a class="lp-btn lp-btn--outline" href="#bookings">See Recent Bookings</a>
+            </div>
+        </div>
+        <aside class="lp-hero__panel lp-reveal" aria-label="Booking confidence">
+            <span>Live curation board</span>
+            <strong>34 itineraries confirmed this week</strong>
+            <p>Beach routes, food crawls, hikes, transfers, and partner payouts coordinated in one flow.</p>
+        </aside>
+    </div>
+    <a class="lp-scroll" href="#why" aria-label="Scroll to why flashpackers choose SogboGo">
+        <span></span>
+    </a>
+</section>
+
+<section class="lp-section lp-section--cream" id="why">
+    <div class="lp-container">
+        <div class="lp-section-head lp-reveal">
+            <p class="lp-kicker">Why flashpackers choose SogboGo</p>
+            <h2>No tourist traps. Just Cebu that feels personal.</h2>
+        </div>
+        <div class="lp-value-grid">
+            <article class="lp-value lp-reveal" style="--accent: var(--lp-teal);">
+                <div class="lp-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="7"/></svg>
+                </div>
+                <h3>Perfectly Curated Just For You</h3>
+                <p>Our AI-powered system maps your vibe, budget, and interests to hand-pick the best-kept secrets in Cebu. Only genuine gems.</p>
+            </article>
+            <article class="lp-value lp-reveal" style="--accent: var(--lp-gold);">
+                <div class="lp-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/><path d="M5 21h14"/></svg>
+                </div>
+                <h3>One Click. Full Itinerary.</h3>
+                <p>Book accommodation, tours, dining, and transport in one seamless flow. We handle coordination; you enjoy the trip.</p>
+            </article>
+            <article class="lp-value lp-reveal" style="--accent: var(--lp-coral);">
+                <div class="lp-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="m8 12 3 3 5-6"/><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/></svg>
+                </div>
+                <h3>Trusted by the Community</h3>
+                <p>Partnered with 50+ local businesses, verified reviews from 2000+ travelers, and a 99% booking success rate.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="lp-section lp-bookings" id="bookings">
+    <div class="lp-container">
+        <div class="lp-section-head lp-reveal">
+            <p class="lp-kicker">Real travelers, real experiences</p>
+            <h2>Recent bookings moving through Cebu right now.</h2>
+        </div>
+    </div>
+    <div class="lp-marquee lp-reveal" data-marquee>
+        <div class="lp-marquee__track">
+            @foreach (var item in new[] {
+                ("Maya", "Berlin", "3-Day Hidden Beach Adventure", "Best decision ever. Felt like a local immediately.", "Booked last week", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80"),
+                ("Jon", "Melbourne", "Moalboal Reef and Mountain Reset", "Everything was timed perfectly, even the transfers.", "Booked 2 days ago", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80"),
+                ("Lea", "Singapore", "Carbon Market Food Crawl", "The vendors knew our names before we arrived.", "Booked yesterday", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80"),
+                ("Andre", "Lisbon", "South Cebu Slow Adventure", "Comfortable, local, and still wildly surprising.", "Booked this week", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=160&q=80"),
+                ("Priya", "Dubai", "Rooftops, Temples, and Night Bites", "I stopped checking maps and just enjoyed the city.", "Booked 3 days ago", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=160&q=80")
+            })
+            {
+                <article class="lp-booking-card">
+                    <img src="@item.Item6" alt="Portrait of @item.Item1 from @item.Item2" />
+                    <div>
+                        <strong>@item.Item1 from @item.Item2</strong>
+                        <span>@item.Item3</span>
+                        <p>"@item.Item4" *****</p>
+                        <small>@item.Item5</small>
+                    </div>
+                </article>
+            }
+            @foreach (var item in new[] {
+                ("Maya", "Berlin", "3-Day Hidden Beach Adventure", "Best decision ever. Felt like a local immediately.", "Booked last week", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80"),
+                ("Jon", "Melbourne", "Moalboal Reef and Mountain Reset", "Everything was timed perfectly, even the transfers.", "Booked 2 days ago", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80"),
+                ("Lea", "Singapore", "Carbon Market Food Crawl", "The vendors knew our names before we arrived.", "Booked yesterday", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80"),
+                ("Andre", "Lisbon", "South Cebu Slow Adventure", "Comfortable, local, and still wildly surprising.", "Booked this week", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=160&q=80"),
+                ("Priya", "Dubai", "Rooftops, Temples, and Night Bites", "I stopped checking maps and just enjoyed the city.", "Booked 3 days ago", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=160&q=80")
+            })
+            {
+                <article class="lp-booking-card" aria-hidden="true">
+                    <img src="@item.Item6" alt="" />
+                    <div>
+                        <strong>@item.Item1 from @item.Item2</strong>
+                        <span>@item.Item3</span>
+                        <p>"@item.Item4" *****</p>
+                        <small>@item.Item5</small>
+                    </div>
+                </article>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="lp-section lp-steps" id="how">
+    <div class="lp-container">
+        <div class="lp-section-head lp-reveal">
+            <p class="lp-kicker">Your journey in 4 steps</p>
+            <h2>Answer once. Arrive with the whole trip in hand.</h2>
+        </div>
+        <div class="lp-timeline" data-timeline>
+            @foreach (var step in new[] {
+                ("1", "Tell Us Your Vibe", "Answer a few quick questions about your travel style, budget, and interests."),
+                ("2", "We Curate", "Our system cross-references 500+ local spots, reviews, and traveler data to build your itinerary."),
+                ("3", "Confirm & Book", "Review your curated plan, adjust what you need, and book all experiences in one transaction."),
+                ("4", "Enjoy", "Arrive with confidence. Real itinerary in hand. Real local experiences. No surprises.")
+            })
+            {
+                <article class="lp-step lp-reveal">
+                    <div class="lp-step__num" data-count="@step.Item1">0</div>
+                    <div>
+                        <h3>@step.Item2</h3>
+                        <p>@step.Item3</p>
+                    </div>
+                </article>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="lp-section lp-section--cream" id="experiences">
+    <div class="lp-container">
+        <div class="lp-section-head lp-reveal">
+            <p class="lp-kicker">This month's top experiences</p>
+            <h2>Small-group routes with local texture and comfort built in.</h2>
+        </div>
+        <div class="lp-experience-grid">
+            @foreach (var exp in new[] {
+                ("Palompon Hidden Beach", "North Cebu", "4.9", "2 days · Small group · €180 per person", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80"),
+                ("Carbon Market After Dark", "Cebu City", "4.8", "1 night · Food walk · €64 per person", "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=900&q=80"),
+                ("Osmena Peak Dawn Trail", "Dalaguete", "5.0", "1 day · Guided hike · €92 per person", "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80")
+            })
+            {
+                <article class="lp-exp-card lp-reveal">
+                    <div class="lp-exp-card__image">
+                        <img src="@exp.Item5" alt="@exp.Item1 experience in @exp.Item2" />
+                        <span class="lp-chip lp-chip--loc">@exp.Item2</span>
+                        <span class="lp-chip lp-chip--rate">@exp.Item3</span>
+                    </div>
+                    <div class="lp-exp-card__body">
+                        <h3>@exp.Item1</h3>
+                        <p>@exp.Item4</p>
+                        <a href="#final-cta">View Details</a>
+                    </div>
+                </article>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="lp-section lp-partners" id="partners">
+    <div class="lp-container lp-partners__grid">
+        <div class="lp-partners__copy lp-reveal">
+            <p class="lp-kicker">For developers</p>
+            <h2>Turn your local knowledge into income.</h2>
+            <p>We are building the future of local travel curation. If you are a developer, designer, or travel expert, SogboGo gives you a clean way to earn from useful recommendations.</p>
+            <ul>
+                <li>15% commission on every booking referred</li>
+                <li>Up to 25% for high-performing partners</li>
+                <li>Monthly payouts with no minimums</li>
+                <li>Dedicated partner dashboard</li>
+                <li>Marketing support and co-branding</li>
+            </ul>
+            <a class="lp-btn lp-btn--primary" href="mailto:partners@sogbogo.com">Apply to Partner Program</a>
+        </div>
+        <div class="lp-partner-stack">
+            @foreach (var benefit in new[] {
+                ("15-25% Per Booking", "Refer experiences through your channels or custom integrations. Earn commission on every successful booking.", "Unlimited Earning Potential"),
+                ("API & Affiliate Links", "Use our RESTful API to embed experiences in your platform, or start simple with affiliate links.", "Full Documentation"),
+                ("Real Data, Real Support", "Access a partner analytics dashboard, real-time tracking, onboarding, and ongoing support.", "24/7 Support")
+            })
+            {
+                <article class="lp-partner-card lp-reveal">
+                    <span>@benefit.Item3</span>
+                    <h3>@benefit.Item1</h3>
+                    <p>@benefit.Item2</p>
+                </article>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="lp-section lp-developer-proof">
+    <div class="lp-container">
+        <div class="lp-section-head lp-reveal">
+            <p class="lp-kicker">Top partner developers</p>
+            <h2>Transparent earning paths for builders who bring the right travelers.</h2>
+        </div>
+        <div class="lp-dev-grid">
+            @foreach (var partner in new[] {
+                ("IslandStack Labs", "234", "8450", "Jan 2024"),
+                ("Nomad Widgets", "518", "18120", "Mar 2024"),
+                ("Cebu API Studio", "1004", "45200", "Jun 2024")
+            })
+            {
+                <article class="lp-dev-card lp-reveal">
+                    <div class="lp-dev-logo">@partner.Item1.Substring(0, 2)</div>
+                    <h3>@partner.Item1</h3>
+                    <p><strong data-count="@partner.Item2">0</strong> bookings referred</p>
+                    <p>€<strong data-count="@partner.Item3">0</strong> revenue generated</p>
+                    <small>Active since @partner.Item4</small>
+                </article>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="lp-section lp-section--cream" id="faq">
+    <div class="lp-container lp-faq">
+        <div class="lp-section-head lp-reveal">
+            <p class="lp-kicker">Questions? We've got answers</p>
+            <h2>The details travelers and partners ask first.</h2>
+        </div>
+        <div class="lp-accordion" data-accordion>
+            @foreach (var faq in new[] {
+                ("How does the curated booking system work?", "Our AI analyzes your travel style, budget, interests, and comfort level, then maps it against 500+ vetted local experiences."),
+                ("How do I become a partner developer?", "Apply through our partner portal. We review your profile, discuss terms, and provide API credentials plus documentation. Onboarding takes about 5 days."),
+                ("What's the payout schedule?", "Monthly payouts are available via Stripe, PayPal, or bank transfer. Commissions calculate daily and payments process on the 1st of each month."),
+                ("Can I customize my affiliate landing page?", "Yes. White-label partner landing pages are available for high-tier partners, with templates and implementation support."),
+                ("What support do developers get?", "Partners receive a dedicated Slack channel, strategy calls, API documentation, sample code, and co-marketing opportunities.")
+            })
+            {
+                <article class="lp-faq-item lp-reveal">
+                    <button type="button" aria-expanded="false">
+                        <span>@faq.Item1</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                    <div class="lp-faq-item__answer">
+                        <p>@faq.Item2</p>
+                    </div>
+                </article>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="lp-final" id="final-cta">
+    <div class="lp-container lp-final__inner lp-reveal">
+        <p class="lp-kicker">Ready when you are</p>
+        <h2>Start curating your Cebu adventure.</h2>
+        <div class="lp-actions">
+            <a class="lp-btn lp-btn--primary" href="mailto:hello@sogbogo.com">Book Your First Experience</a>
+            <a class="lp-btn lp-btn--outline" href="#partners">Become a Partner Developer</a>
+        </div>
+        <p>Questions? <a href="mailto:hello@sogbogo.com">Chat with us</a> or <a href="mailto:hello@sogbogo.com?subject=Schedule%20a%20SogboGo%20call">schedule a call</a>.</p>
+    </div>
+</section>

@@ -1,4 +1,4 @@
-// program.cs (Updated to ensure default route points to Explore)
+// program.cs
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -20,9 +20,9 @@ app.UseAuthorization();
 
 app.MapStaticAssets();
 
-// Default route points to ExploreController (Index action)
+// Default route points to the SogboGo landing page.
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Explore}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
