@@ -1,0 +1,32 @@
+@model RecoverAccountViewModel
+
+@{
+    ViewData["Title"] = "Recover your account";
+}
+
+<section class="auth-page">
+    <div class="auth-panel lp-reveal">
+        <a class="auth-back" asp-controller="Account" asp-action="Index">Back</a>
+        <div class="auth-brand">Sogbo<span>Go</span></div>
+        <h1>Recover your account</h1>
+
+        @if (Model.Submitted)
+        {
+            <div class="auth-alert auth-alert--success" role="status">
+                If this email is connected to SogboGo, recovery instructions are on the way.
+            </div>
+        }
+
+        <form class="auth-form" asp-controller="Account" asp-action="Recover" method="post">
+            @Html.AntiForgeryToken()
+            <label asp-for="Email">Recovery email</label>
+            <input asp-for="Email" type="email" placeholder="Enter your email address" autocomplete="email" autofocus />
+            <span class="auth-validation" asp-validation-for="Email"></span>
+            <button class="auth-primary" type="submit">Send recovery link</button>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

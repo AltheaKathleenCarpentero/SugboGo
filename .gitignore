@@ -480,3 +480,10 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# SogboGo local auth runtime files
+App_Data/DataProtectionKeys/
+App_Data/auth-users.json
+buildtmp/
+.dotnet/
+appsettings.Development.json

@@ -1,0 +1,41 @@
+@model RegisterViewModel
+
+@{
+    ViewData["Title"] = "Create your account";
+}
+
+<section class="auth-page">
+    <div class="auth-panel lp-reveal">
+        <a class="auth-back" asp-controller="Account" asp-action="Index">Back</a>
+        <div class="auth-brand">Sogbo<span>Go</span></div>
+        <h1>Create your account</h1>
+        <p class="auth-subtitle">Use this email for your Cebu passes, host updates, and booking receipts.</p>
+
+        @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+        {
+            <div class="auth-alert" role="alert">@Model.ErrorMessage</div>
+        }
+
+        <form class="auth-form" asp-controller="Account" asp-action="Register" method="post">
+            @Html.AntiForgeryToken()
+
+            <label asp-for="Email">Email address</label>
+            <input asp-for="Email" type="email" autocomplete="email" readonly />
+            <span class="auth-validation" asp-validation-for="Email"></span>
+
+            <label asp-for="FullName">Full name</label>
+            <input asp-for="FullName" type="text" placeholder="Enter your full name" autocomplete="name" autofocus />
+            <span class="auth-validation" asp-validation-for="FullName"></span>
+
+            <label asp-for="Password">Password</label>
+            <input asp-for="Password" type="password" placeholder="Create a password" autocomplete="new-password" />
+            <span class="auth-validation" asp-validation-for="Password"></span>
+
+            <button class="auth-primary" type="submit">Create account</button>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

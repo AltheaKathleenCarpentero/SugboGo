@@ -334,9 +334,98 @@ const initLandingPage = () => {
     });
 };
 
+const initBookingFlow = () => {
+    const flow = document.querySelector('[data-booking-flow]');
+
+    if (!flow) {
+        return;
+    }
+
+    const stages = [...flow.querySelectorAll('[data-stage]')];
+    const progressSteps = [...flow.querySelectorAll('[data-progress-step]')];
+    const stageButtons = [...flow.querySelectorAll('[data-next-stage]')];
+    const swapButtons = [...flow.querySelectorAll('[data-swap-button]')];
+    const payButtons = [...flow.querySelectorAll('[data-pay-method]')];
+    const checkoutForm = flow.querySelector('[data-checkout-form]');
+    const alternatives = [
+        'Mactan Ceramic Courtyard',
+        'Liloan Moon Tide Table',
+        'Busay Garden Hideout',
+        'Alcoy White Rock Swim',
+        'Kamagayan Vinyl Supper'
+    ];
+
+    const setStage = (stageName) => {
+        stages.forEach((stage) => {
+            const isActive = stage.dataset.stage === stageName;
+
+            stage.classList.toggle('is-active', isActive);
+            stage.setAttribute('aria-hidden', String(!isActive));
+        });
+
+        progressSteps.forEach((step) => {
+            step.classList.toggle('is-active', step.dataset.progressStep === stageName);
+        });
+
+        flow.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    stageButtons.forEach((button) => {
+        button.addEventListener('click', () => setStage(button.dataset.nextStage));
+    });
+
+    swapButtons.forEach((button, index) => {
+        button.addEventListener('click', () => {
+            const item = button.closest('[data-journey-item]');
+            const title = item?.querySelector('[data-item-title]');
+            const note = item?.querySelector('[data-swap-note]');
+            const nextTitle = alternatives[(index + Number(button.dataset.swapCount || '0')) % alternatives.length];
+
+            button.dataset.swapCount = String(Number(button.dataset.swapCount || '0') + 1);
+
+            if (title) {
+                title.textContent = nextTitle;
+            }
+
+            if (note) {
+                note.textContent = 'Swapped. AI found a quieter gem with a similar comfort profile.';
+            }
+        });
+    });
+
+    payButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            button.textContent = 'Authorizing...';
+            window.setTimeout(() => setStage('success'), 520);
+        });
+    });
+
+    checkoutForm?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        setStage('success');
+    });
+};
+
+const initAccountFlow = () => {
+    const emailForm = document.querySelector('[data-auth-email-form]');
+
+    emailForm?.addEventListener('submit', () => {
+        const button = emailForm.querySelector('.auth-primary');
+
+        if (!button) {
+            return;
+        }
+
+        button.classList.add('is-loading');
+        button.textContent = 'Checking account...';
+    });
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.classList.add('sg-motion-ready');
     initMountainRange();
     initDestinationCinema();
     initLandingPage();
+    initBookingFlow();
+    initAccountFlow();
 });
