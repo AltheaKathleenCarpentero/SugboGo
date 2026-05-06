@@ -426,6 +426,20 @@ button {
     overflow: hidden;
 }
 
+.sg-mountain-canvas {
+    position: absolute;
+    inset: auto 0 0;
+    width: 100%;
+    height: 58%;
+    z-index: 1;
+    opacity: 0.2;
+    filter: sepia(1) blur(0px);
+    transform: translate3d(0, 0, 0);
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    transition: opacity 120ms linear, filter 120ms linear, transform 120ms linear;
+}
+
 .sg-hero__image {
     width: 100%;
     height: 100%;
@@ -457,6 +471,7 @@ button {
     padding: 20px 24px;
     box-shadow: var(--shadow-hover);
     min-width: 200px;
+    z-index: 2;
 }
 
     .sg-hero__overlay-card .sg-caption {
@@ -524,19 +539,65 @@ button {
 }
 
 /* ── Tour Package Cards ─────────────────────────────────────── */
+.sg-destination-cinema {
+    --sg-card-pan: 50%;
+    position: relative;
+    overflow: hidden;
+    background-color: var(--color-off-white);
+    background-image: linear-gradient(90deg, rgba(245,242,236,0.95), rgba(253,252,250,0.72), rgba(232,227,218,0.9)), url('/images/hero-bg.jpg');
+    background-position: var(--sg-card-pan) center;
+    background-size: 150% auto;
+    transition: background-position 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.sg-card-rail {
+    display: flex;
+    gap: clamp(20px, 4vw, 48px);
+    padding: 12px clamp(20px, 8vw, 92px) 36px;
+    margin-inline: calc(clamp(20px, 5vw, 60px) * -1);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: clamp(20px, 8vw, 92px);
+    overscroll-behavior-x: contain;
+    perspective: 1200px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(196,97,74,0.4) transparent;
+}
+
+.sg-card-rail::-webkit-scrollbar {
+    height: 8px;
+}
+
+.sg-card-rail::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sg-card-rail::-webkit-scrollbar-thumb {
+    background-color: rgba(196,97,74,0.35);
+    border-radius: var(--radius-pill);
+}
+
 .sg-tour-card {
     background-color: var(--color-white);
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-card);
-    transition: var(--transition);
+    transition: opacity 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
     display: flex;
     flex-direction: column;
     border: 1px solid var(--color-border);
+    flex: 0 0 clamp(320px, 36vw, 440px);
+    min-height: 100%;
+    opacity: var(--sg-card-opacity, 1);
+    transform: rotateY(var(--sg-card-tilt, 0deg)) skewY(var(--sg-card-skew, 0deg));
+    transform-origin: center;
+    transform-style: preserve-3d;
+    scroll-snap-align: center;
+    will-change: transform, opacity, box-shadow;
 }
 
     .sg-tour-card:hover {
-        transform: translateY(-6px);
         box-shadow: var(--shadow-hover);
     }
 
@@ -551,11 +612,39 @@ button {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        transition: transform var(--transition-slow);
+        object-position: var(--sg-image-pan-x, 0%) var(--sg-image-pan-y, 50%);
+        transform: scale(var(--sg-image-scale, 1));
+        transition: transform 180ms ease-out, object-position 180ms ease-out;
+        will-change: transform, object-position;
     }
 
 .sg-tour-card:hover .sg-tour-card__image img {
-    transform: scale(1.05);
+    transform: scale(calc(var(--sg-image-scale, 1) + 0.03));
+}
+
+.sg-motion-ready .sg-image-wipe {
+    clip-path: polygon(0% 0%, 0% 0%, 0% 100%, 0% 100%);
+    transition: clip-path 500ms ease-in-out;
+}
+
+.sg-motion-ready .sg-image-wipe.is-revealed {
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+}
+
+.sg-motion-ready .sg-image-wipe--reverse {
+    clip-path: polygon(100% 0%, 100% 0%, 100% 100%, 100% 100%);
+}
+
+.sg-motion-ready .sg-image-wipe--reverse.is-revealed {
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+}
+
+.sg-motion-ready .sg-image-wipe--diagonal {
+    clip-path: polygon(0% 0%, 0% 0%, 10% 100%, 0% 100%);
+}
+
+.sg-motion-ready .sg-image-wipe--diagonal.is-revealed {
+    clip-path: polygon(0% 0%, 100% 0%, 90% 100%, 0% 100%);
 }
 
 .sg-tour-card__badge {
@@ -1177,6 +1266,10 @@ button {
         grid-template-columns: repeat(2, 1fr);
     }
 
+    .sg-tour-card {
+        flex-basis: clamp(310px, 54vw, 430px);
+    }
+
     .sg-grid-4 {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -1231,6 +1324,17 @@ button {
 @media (max-width: 640px) {
     .sg-grid-3 {
         grid-template-columns: 1fr;
+    }
+
+    .sg-card-rail {
+        gap: 18px;
+        padding-inline: 20px;
+        margin-inline: -20px;
+        scroll-padding-inline: 20px;
+    }
+
+    .sg-tour-card {
+        flex-basis: min(86vw, 360px);
     }
 
     .sg-grid-4 {
@@ -1293,5 +1397,19 @@ button {
     .sg-hero__ctas {
         flex-direction: column;
         align-items: flex-start;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sg-mountain-canvas,
+    .sg-destination-cinema,
+    .sg-tour-card,
+    .sg-tour-card__image,
+    .sg-tour-card__image img {
+        transition: none;
+    }
+
+    .sg-card-rail {
+        scroll-behavior: auto;
     }
 }
