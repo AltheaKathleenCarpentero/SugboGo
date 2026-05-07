@@ -73,6 +73,23 @@ builder.Services
 
 var app = builder.Build();
 
+if (!string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString("DefaultConnection")))
+{
+    using var scope = app.Services.CreateScope();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseMigration");
+
+    try
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<SugboGoDbContext>();
+        await dbContext.Database.MigrateAsync();
+        await TravelSpotSeeder.SeedAsync(dbContext);
+    }
+    catch (Exception exception)
+    {
+        logger.LogError(exception, "Database migration or travel spot seeding failed. Data-backed travel features may be unavailable until migrations are applied.");
+    }
+}
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

@@ -30,7 +30,7 @@ public sealed class DashboardController : Controller
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         ViewData["Title"] = "Dashboard";
-        return View(await _dashboardExperienceService.BuildForUserAsync(User, cancellationToken));
+        return View("~/Views/User/Dashboard/Index.cshtml", await _dashboardExperienceService.BuildForUserAsync(User, cancellationToken));
     }
 
     [HttpPost]

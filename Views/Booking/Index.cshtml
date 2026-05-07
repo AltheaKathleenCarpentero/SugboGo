@@ -1,204 +1,230 @@
-@{
-    ViewData["Title"] = "Journey Timeline";
+@model BookingStepViewModel
 
-    var itinerary = new[] {
-        new {
-            Time = "Day 1, 3:00 PM",
-            Category = "Boutique stay",
-            Title = "The Helix House",
-            Location = "Banawa ridge",
-            Duration = "2 nights",
-            Price = "PHP 8,900",
-            Note = "Design-led hill stay with late checkout, airport transfer, and a private balcony breakfast.",
-            Includes = "King studio, welcome drinks, breakfast for two, transfer coordination"
-        },
-        new {
-            Time = "Day 2, 6:10 AM",
-            Category = "Hidden water",
-            Title = "Talisay Blue Hour Cove",
-            Location = "South Cebu coast",
-            Duration = "7 hours",
-            Price = "PHP 4,800",
-            Note = "A low-crowd beach route timed around tide windows, with a local guide and picnic stop.",
-            Includes = "Private van, guide, reef shoes, towel kit, packed brunch"
-        },
-        new {
-            Time = "Day 2, 7:30 PM",
-            Category = "Secret table",
-            Title = "The Red Door Supper Club",
-            Location = "Cebu City",
-            Duration = "2.5 hours",
-            Price = "PHP 3,200",
-            Note = "A chef-hosted dinner in a restored ancestral home, matched to your quiz preference for smoky seafood and quiet rooms.",
-            Includes = "Five-course menu, calamansi aperitif, table deposit, return ride"
-        },
-        new {
-            Time = "Day 3, 9:00 AM",
-            Category = "Soft adventure",
-            Title = "Osmena Dawn Trail Reset",
-            Location = "Dalaguete",
-            Duration = "5 hours",
-            Price = "PHP 2,900",
-            Note = "A gentle peak walk with a local naturalist, coffee at the ridge, and flexible pacing.",
-            Includes = "Guide, permit, trail snacks, rain shell, photo stops"
-        }
-    };
+@{
+    ViewData["Title"] = $"Book {Model.Data.DestinationName}";
+    var minDate = DateTime.Today.AddDays(1).ToString("yyyy-MM-dd");
+    var defaultDate = DateTime.Today.AddDays(7).ToString("yyyy-MM-dd");
+    var profileSummary = Model.Preferences is null
+        ? "Traveler profile pending. Complete the preference survey for sharper recommendations."
+        : $"{Model.Preferences.BudgetRange}, {Model.Preferences.TravelPace} pace, adventure {Model.Preferences.AdventureLevel}/5";
 }
 
-<section class="booking-flow" data-booking-flow>
+<section class="booking-flow" data-booking-wizard data-destination="@Model.Data.DestinationName" data-base-price="@Model.Data.BasePrice" data-image-url="@Model.Data.ImageUrl" data-location="@Model.Data.Location">
+    @Html.AntiForgeryToken()
+
     <div class="booking-shell">
-        <div class="booking-hero lp-reveal">
-            <p class="lp-kicker">Vibe Quiz complete</p>
+        <header class="booking-hero lp-reveal">
             <div class="booking-hero__grid">
                 <div>
-                    <h1>Your Cebu Journey Timeline</h1>
-                    <p>Four curated gems, ordered by arrival time and tuned for a flashpacker rhythm: comfort first, surprise close behind.</p>
+                    <p class="lp-kicker">Secure Cebu booking</p>
+                    <h1>@Model.Data.DestinationName</h1>
+                    <p>@Model.Data.Description</p>
                 </div>
-                <aside class="booking-summary" aria-label="Journey summary">
-                    <span>3 days</span>
-                    <strong>PHP 19,800</strong>
-                    <small>Includes local coordination, partner holds, and digital passes.</small>
+                <aside class="booking-summary" aria-label="Destination overview">
+                    <span>@Model.Data.RatingSummary</span>
+                    <strong>PHP @Model.Data.BasePrice.ToString("N0")</strong>
+                    <small>@Model.Data.Location · @Model.Data.Duration</small>
+                    <small>Best time: @Model.Data.BestTimeToVisit</small>
                 </aside>
             </div>
-        </div>
+        </header>
 
-        <div class="booking-progress lp-reveal" aria-label="Booking progress">
-            <span class="is-active" data-progress-step="review">Review</span>
-            <span data-progress-step="payment">Quick-Pay</span>
-            <span data-progress-step="success">Passes</span>
-        </div>
+        <nav class="booking-progress lp-reveal" aria-label="Booking progress">
+            <span class="is-active" data-step-indicator="config">1. Trip details</span>
+            <span data-step-indicator="review">2. Review</span>
+            <span data-step-indicator="payment">3. Payment</span>
+            <span data-step-indicator="success">4. QR pass</span>
+        </nav>
 
-        <div class="booking-stage is-active" data-stage="review">
+        <section class="booking-stage is-active" data-booking-step="config">
             <div class="journey-layout">
-                <div class="journey-timeline lp-reveal" aria-label="Curated itinerary timeline">
-                    @for (var i = 0; i < itinerary.Length; i++)
-                    {
-                        var item = itinerary[i];
-                        <article class="journey-item" data-journey-item>
-                            <div class="journey-item__pin">
-                                <span>@(i + 1)</span>
+                <main class="journey-timeline" aria-label="Booking options">
+                    <article class="journey-item">
+                        <div class="journey-item__pin"><span>A</span></div>
+                        <div class="journey-item__body">
+                            <div class="journey-item__topline"><span>Travel date</span><strong>Weather-aware</strong></div>
+                            <div class="booking-form-grid">
+                                <label>
+                                    <span>Choose a date</span>
+                                    <input type="date" name="travelDate" value="@defaultDate" min="@minDate" required />
+                                    <small>Peak indicators and pre-trip weather reminders are attached to the booking record.</small>
+                                </label>
+                                <label>
+                                    <span>Traveler group</span>
+                                    <select name="travelerType">
+                                        <option value="Solo" data-count="1">Solo</option>
+                                        <option value="Couple" data-count="2">Couple</option>
+                                        <option value="Group" data-count="4">Group</option>
+                                        <option value="Family" data-count="4">Family</option>
+                                    </select>
+                                </label>
                             </div>
-                            <div class="journey-item__body">
-                                <div class="journey-item__topline">
-                                    <span>@item.Time</span>
-                                    <span>@item.Category</span>
-                                </div>
-                                <div class="journey-item__main">
-                                    <div>
-                                        <h2 data-item-title>@item.Title</h2>
-                                        <p>@item.Location • @item.Duration</p>
-                                    </div>
-                                    <strong>@item.Price</strong>
-                                </div>
-                                <details class="journey-details">
-                                    <summary>Details</summary>
-                                    <p>@item.Note</p>
-                                    <small>@item.Includes</small>
-                                </details>
-                                <div class="journey-item__actions">
-                                    <button class="booking-link-btn" type="button" data-swap-button>Swap</button>
-                                    <span data-swap-note>AI matched from your beach, design, and food signals.</span>
-                                </div>
-                            </div>
-                        </article>
-                    }
-                </div>
-
-                <aside class="checkout-panel lp-reveal">
-                    <p class="lp-kicker">Trip hold</p>
-                    <h2>Ready to lock the route?</h2>
-                    <dl>
-                        <div><dt>Experiences</dt><dd>4 curated stops</dd></div>
-                        <div><dt>Travelers</dt><dd>2 guests</dd></div>
-                        <div><dt>Due now</dt><dd>PHP 19,800</dd></div>
-                    </dl>
-                    <button class="booking-primary" type="button" data-next-stage="payment">Continue to Quick-Pay</button>
-                    <p>Partner holds release in 18 minutes. You can still swap gems before payment.</p>
-                </aside>
-            </div>
-        </div>
-
-        <div class="booking-stage" data-stage="payment" aria-hidden="true">
-            <div class="flash-checkout">
-                <section class="flash-checkout__form" aria-labelledby="checkout-title">
-                    <p class="lp-kicker">Flashpacker checkout</p>
-                    <h2 id="checkout-title">One page, no friction.</h2>
-
-                    <div class="quick-pay" aria-label="Quick pay options">
-                        <button type="button" data-pay-method="Apple Pay">Apple Pay</button>
-                        <button type="button" data-pay-method="Google Pay">Google Pay</button>
-                        <button type="button" data-pay-method="Stripe">Stripe</button>
-                    </div>
-
-                    <div class="booking-divider"><span>or confirm traveler details</span></div>
-
-                    <form class="checkout-form" data-checkout-form>
-                        <label>
-                            Full name
-                            <input type="text" value="Mika Santos" autocomplete="name" />
-                        </label>
-                        <label>
-                            Email
-                            <input type="email" value="mika@sugbogo.test" autocomplete="email" />
-                        </label>
-                        <label>
-                            Mobile
-                            <input type="tel" value="+63 917 000 2841" autocomplete="tel" />
-                        </label>
-                        <label>
-                            Card
-                            <input type="text" value="4242 4242 4242 4242" inputmode="numeric" />
-                        </label>
-                        <div class="checkout-form__row">
-                            <label>
-                                Expiry
-                                <input type="text" value="08 / 29" inputmode="numeric" />
-                            </label>
-                            <label>
-                                CVC
-                                <input type="text" value="248" inputmode="numeric" />
-                            </label>
                         </div>
-                        <button class="booking-primary" type="submit">Pay PHP 19,800</button>
-                    </form>
-                </section>
+                    </article>
 
-                <aside class="payment-recap">
-                    <p class="lp-kicker">Included today</p>
-                    <ul>
-                        <li>All partner reservations held instantly</li>
-                        <li>Digital passes and QR codes issued after payment</li>
-                        <li>One SugboGo concierge thread for schedule changes</li>
-                    </ul>
-                    <button class="booking-link-btn" type="button" data-next-stage="review">Back to timeline</button>
-                </aside>
-            </div>
-        </div>
-
-        <div class="booking-stage" data-stage="success" aria-hidden="true">
-            <section class="success-state">
-                <div class="success-state__copy">
-                    <p class="lp-kicker">Confirmed in 28 seconds</p>
-                    <h2>Your Adventure is Ready</h2>
-                    <p>The full Cebu route is now live. We sent your digital pass bundle, pickup windows, and host notes to your email and mobile.</p>
-                    <a class="booking-primary" href="/">Back to SugboGo</a>
-                </div>
-                <div class="pass-stack" aria-label="Digital pass previews">
-                    @foreach (var pass in new[] { ("Stay", "HELIX-18A"), ("Tour", "COVE-42Q"), ("Dinner", "RED-09K") })
-                    {
-                        <article class="digital-pass">
-                            <span>@pass.Item1</span>
-                            <strong>@pass.Item2</strong>
-                            <div class="qr-preview" aria-label="QR preview">
-                                @for (var cell = 0; cell < 25; cell++)
+                    <article class="journey-item">
+                        <div class="journey-item__pin"><span>B</span></div>
+                        <div class="journey-item__body">
+                            <div class="journey-item__topline"><span>Activities</span><strong>Add-ons</strong></div>
+                            <div class="booking-option-list">
+                                @foreach (var activity in Model.ActivityOptions)
                                 {
-                                    <i class="@(((cell + pass.Item2.Length) % 3 == 0 || cell == 0 || cell == 4 || cell == 20 || cell == 24) ? "is-filled" : "")"></i>
+                                    <label class="booking-choice">
+                                        <input type="checkbox" name="activities" value="@activity.Name" data-price="@activity.Price" />
+                                        <span>
+                                            <strong>@activity.Name</strong>
+                                            <small>@activity.Description</small>
+                                        </span>
+                                        <b>PHP @activity.Price.ToString("N0")</b>
+                                    </label>
                                 }
                             </div>
-                        </article>
-                    }
+                        </div>
+                    </article>
+
+                    <article class="journey-item">
+                        <div class="journey-item__pin"><span>C</span></div>
+                        <div class="journey-item__body">
+                            <div class="journey-item__topline"><span>Accommodation</span><strong>Stay type</strong></div>
+                            <div class="booking-option-list booking-option-list--media">
+                                @foreach (var stay in Model.AccommodationOptions)
+                                {
+                                    <label class="booking-choice booking-choice--media">
+                                        <input type="radio" name="accommodation" value="@stay.Name" data-price="@stay.PricePerNight" @(stay.PricePerNight == 0 ? "checked" : null) />
+                                        <img src="@stay.ImageUrl" alt="@stay.Name" />
+                                        <span>
+                                            <strong>@stay.Name</strong>
+                                            <small>@stay.Type · @stay.Amenities · @stay.Distance · @stay.Rating rating</small>
+                                        </span>
+                                        <b>@(stay.PricePerNight == 0 ? "Included" : $"PHP {stay.PricePerNight:N0}")</b>
+                                    </label>
+                                }
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="journey-item">
+                        <div class="journey-item__pin"><span>D</span></div>
+                        <div class="journey-item__body">
+                            <div class="journey-item__topline"><span>Transportation</span><strong>Route support</strong></div>
+                            <div class="booking-option-list">
+                                @foreach (var transport in Model.TransportOptions)
+                                {
+                                    <label class="booking-choice">
+                                        <input type="radio" name="transportation" value="@transport.Name" data-price="@transport.Price" @(transport.Price == 0 ? "checked" : null) />
+                                        <span>
+                                            <strong>@transport.Name</strong>
+                                            <small>@transport.Details</small>
+                                        </span>
+                                        <b>@(transport.Price == 0 ? "Included" : $"PHP {transport.Price:N0}")</b>
+                                    </label>
+                                }
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="journey-item">
+                        <div class="journey-item__pin"><span>E</span></div>
+                        <div class="journey-item__body">
+                            <div class="journey-item__topline"><span>Traveler notes</span><strong>Optional</strong></div>
+                            <label class="booking-notes">
+                                <span>Anything we should know before your trip?</span>
+                                <textarea name="travelerNotes" rows="4" placeholder="Vegetarian meals, avoid rough boat rides, anniversary trip, beginner swimmer..."></textarea>
+                            </label>
+                            <div class="journey-item__actions">
+                                <span>@profileSummary</span>
+                                <button type="button" class="booking-link-btn" data-goto-step="review">Review booking</button>
+                            </div>
+                        </div>
+                    </article>
+                </main>
+
+                <aside class="checkout-panel lp-reveal">
+                    <h2>Live price</h2>
+                    <dl>
+                        <div><dt>Base experience</dt><dd>PHP <span data-base-display>@Model.Data.BasePrice.ToString("N0")</span></dd></div>
+                        <div data-add-ons-row hidden><dt>Add-ons</dt><dd>PHP <span data-addons-display>0</span></dd></div>
+                        <div><dt>Taxes and fees</dt><dd>PHP <span data-taxes-display>0</span></dd></div>
+                        <div><dt>Total</dt><dd>PHP <span data-total-display>@Model.Data.BasePrice.ToString("N0")</span></dd></div>
+                    </dl>
+                    <p>@Model.SmartRecommendations.FirstOrDefault()</p>
+                    <div class="booking-rec-list">
+                        @foreach (var rec in Model.SmartRecommendations.Skip(1))
+                        {
+                            <small>@rec</small>
+                        }
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <section class="booking-stage" data-booking-step="review">
+            <div class="journey-layout">
+                <main class="flash-checkout__form">
+                    <h2>Review booking</h2>
+                    <div class="review-summary" data-review-summary></div>
+                    <div class="journey-item__actions">
+                        <button type="button" class="booking-link-btn" data-goto-step="config">Back to options</button>
+                        <button type="button" class="booking-link-btn" data-goto-step="payment">Proceed to payment</button>
+                    </div>
+                </main>
+                <aside class="checkout-panel">
+                    <h2>Map and timing</h2>
+                    <div class="booking-map">
+                        <iframe title="@Model.Data.DestinationName map" src="@Model.Data.MapUrl" loading="lazy"></iframe>
+                    </div>
+                    <p>Admin receives this booking instantly after payment confirmation.</p>
+                </aside>
+            </div>
+        </section>
+
+        <section class="booking-stage" data-booking-step="payment">
+            <div class="flash-checkout">
+                <main class="flash-checkout__form">
+                    <h2>Secure payment</h2>
+                    <div class="quick-pay">
+                        <button type="button" data-pay-method="GCash">GCash</button>
+                        <button type="button" data-pay-method="Maya">Maya</button>
+                        <button type="button" data-pay-method="Card">Card</button>
+                        <button type="button" data-pay-method="PayPal">PayPal</button>
+                    </div>
+                    <div class="booking-divider"><span>Encrypted checkout simulation</span></div>
+                    <div class="payment-sim" data-payment-sim hidden>
+                        <p>Processing payment and writing the booking to Supabase PostgreSQL...</p>
+                    </div>
+                </main>
+                <aside class="payment-recap">
+                    <h2>Protection</h2>
+                    <ul>
+                        <li>Secure checkout token attached to the booking.</li>
+                        <li>QR verification code generated after payment.</li>
+                        <li>Digital itinerary appears in the traveler dashboard.</li>
+                    </ul>
+                </aside>
+            </div>
+        </section>
+
+        <section class="booking-stage" data-booking-step="success">
+            <div class="success-state">
+                <div class="success-state__copy">
+                    <p class="lp-kicker">Booking confirmed</p>
+                    <h2>Your Cebu trip is locked in.</h2>
+                    <p>Use the QR pass at check-in. The same booking now appears in admin operations and your dashboard.</p>
+                    <a href="/Dashboard" class="booking-primary">Open trip dashboard</a>
                 </div>
-            </section>
-        </div>
+                <div class="pass-stack">
+                    <article class="digital-pass">
+                        <div><span>Booking ID</span><strong data-conf-id>Pending</strong></div>
+                        <div class="qr-preview" data-qr-code-placeholder aria-label="QR code preview"></div>
+                    </article>
+                    <article class="digital-pass">
+                        <div><span>Destination</span><strong>@Model.Data.DestinationName</strong></div>
+                    </article>
+                    <article class="digital-pass">
+                        <div><span>Support</span><strong>Weather, checklist, emergency contacts</strong></div>
+                    </article>
+                </div>
+            </div>
+        </section>
     </div>
 </section>

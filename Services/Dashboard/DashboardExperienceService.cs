@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using SugboGo.Data;
 using SugboGo.Models;
 using SugboGo.Services.Travel;
 
@@ -9,15 +11,18 @@ public sealed class DashboardExperienceService : IDashboardExperienceService
     private readonly IDestinationPostStore _postStore;
     private readonly ITravelPreferenceStore _preferenceStore;
     private readonly IUserSavedGemStore _savedGemStore;
+    private readonly SugboGoDbContext _dbContext;
 
     public DashboardExperienceService(
         IDestinationPostStore postStore,
         ITravelPreferenceStore preferenceStore,
-        IUserSavedGemStore savedGemStore)
+        IUserSavedGemStore savedGemStore,
+        SugboGoDbContext dbContext)
     {
         _postStore = postStore;
         _preferenceStore = preferenceStore;
         _savedGemStore = savedGemStore;
+        _dbContext = dbContext;
     }
 
     public async Task<DashboardViewModel> BuildForUserAsync(ClaimsPrincipal user, CancellationToken cancellationToken = default)
@@ -27,7 +32,6 @@ public sealed class DashboardExperienceService : IDashboardExperienceService
         var userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         var firstName = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "Traveler";
         var seed = Math.Abs(email.GetHashCode());
-        var hasTrip = !email.Contains("notrip", StringComparison.OrdinalIgnoreCase);
         var preferences = string.IsNullOrWhiteSpace(userId)
             ? null
             : await _preferenceStore.FindLatestByUserIdAsync(userId, cancellationToken);
@@ -35,17 +39,18 @@ public sealed class DashboardExperienceService : IDashboardExperienceService
         var savedGems = string.IsNullOrWhiteSpace(userId)
             ? []
             : await _savedGemStore.GetByUserIdAsync(userId, cancellationToken);
+        var bookings = await GetBookingsForUserAsync(userId, cancellationToken);
 
         return new DashboardViewModel
         {
             FirstName = firstName,
             UserInitial = firstName[..1].ToUpperInvariant(),
             Greeting = BuildGreeting(firstName),
-            ActiveTrip = hasTrip ? BuildActiveTrip(firstName, seed) : null,
+            ActiveTrip = BuildActiveTrip(firstName, seed, bookings.FirstOrDefault()),
             SocialFeed = BuildSocialFeed(posts, preferences),
             VibeTags = BuildVibeTags(preferences),
             CuratedGems = BuildCuratedGems(seed),
-            Bookings = BuildBookings(hasTrip),
+            Bookings = BuildBookings(bookings),
             SavedGems = savedGems.Select(gem => new SavedGemViewModel
             {
                 Id = gem.Id,
@@ -65,9 +70,15 @@ public sealed class DashboardExperienceService : IDashboardExperienceService
         return $"{dayPart}, {firstName}";
     }
 
-    private static ActiveTripViewModel BuildActiveTrip(string firstName, int seed)
+    private static ActiveTripViewModel? BuildActiveTrip(string firstName, int seed, Booking? booking)
     {
+        if (booking is null)
+        {
+            return null;
+        }
+
         var startDate = DateTime.Today.AddDays(seed % 2 == 0 ? 3 : -1);
+        startDate = booking.TravelDate.ToLocalTime().Date;
         var status = DateTime.Today >= startDate
             ? "You are currently in Cebu!"
             : $"Your Cebu Adventure begins in {(startDate - DateTime.Today).Days} days!";
@@ -81,11 +92,11 @@ public sealed class DashboardExperienceService : IDashboardExperienceService
 
         return new ActiveTripViewModel
         {
-            Title = $"{firstName}'s Urban Explorer Route",
+            Title = $"{firstName}'s {booking.DestinationName} trip",
             Status = status,
-            DateRange = $"{startDate:MMM d} to {startDate.AddDays(2):MMM d, yyyy}",
-            Hotel = "The Helix House, Banawa ridge",
-            SogboKeyCode = $"SG-{DateTime.Today:MMdd}-{seed % 9000 + 1000}",
+            DateRange = $"{startDate:MMM d} to {startDate.AddDays(1):MMM d, yyyy}",
+            Hotel = ExtractSelectedName(booking.SelectedAccommodationJson, "Accommodation pending"),
+            SogboKeyCode = booking.QrCode,
             Stops = stops,
             MapPins =
             [
@@ -163,18 +174,66 @@ public sealed class DashboardExperienceService : IDashboardExperienceService
         return gems.OrderBy(gem => (gem.MatchScore + seed) % 17).ToList();
     }
 
-    private static List<BookingVaultItemViewModel> BuildBookings(bool hasTrip)
+    private static List<BookingVaultItemViewModel> BuildBookings(IEnumerable<Booking> bookings)
     {
-        var bookings = new List<BookingVaultItemViewModel>();
-
-        if (hasTrip)
+        return bookings.Select(booking => new BookingVaultItemViewModel
         {
-            bookings.Add(new() { Type = "Hotel", Title = "The Helix House", Date = DateTime.Today.AddDays(3).ToString("MMM d"), Status = "Confirmed" });
-            bookings.Add(new() { Type = "Activity", Title = "Private Mountain View", Date = DateTime.Today.AddDays(4).ToString("MMM d"), Status = "Guide assigned" });
-            bookings.Add(new() { Type = "Transport", Title = "Airport to Banawa", Date = DateTime.Today.AddDays(3).ToString("MMM d"), Status = "Driver pending" });
+            Type = booking.TravelerType,
+            Title = booking.DestinationName,
+            Date = booking.TravelDate.ToLocalTime().ToString("MMM d, yyyy"),
+            Status = $"{booking.Status} · {booking.QrCode}"
+        }).ToList();
+    }
+
+    private async Task<List<Booking>> GetBookingsForUserAsync(string userId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return [];
         }
 
-        return bookings;
+        try
+        {
+            return await _dbContext.Bookings
+                .Where(booking => booking.UserId == userId)
+                .OrderByDescending(booking => booking.CreatedAt)
+                .ToListAsync(cancellationToken);
+        }
+        catch (Exception exception) when (IsMissingBookingsSchema(exception))
+        {
+            return [];
+        }
+    }
+
+    private static bool IsMissingBookingsSchema(Exception exception)
+    {
+        for (var current = exception; current is not null; current = current.InnerException!)
+        {
+            if (current.Message.Contains("Bookings", StringComparison.OrdinalIgnoreCase) ||
+                current.Message.Contains("bookings", StringComparison.OrdinalIgnoreCase) ||
+                current.Message.Contains("column", StringComparison.OrdinalIgnoreCase) ||
+                current.Message.Contains("relation", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string ExtractSelectedName(string json, string fallback)
+    {
+        try
+        {
+            using var document = System.Text.Json.JsonDocument.Parse(json);
+            return document.RootElement.TryGetProperty("Name", out var name) && !string.IsNullOrWhiteSpace(name.GetString())
+                ? name.GetString()!
+                : fallback;
+        }
+        catch
+        {
+            return fallback;
+        }
     }
 
     private static List<PastAdventureViewModel> BuildPastAdventures(int seed)
