@@ -13,6 +13,11 @@ public sealed class SupabaseOptions
     public string ServiceRoleKey { get; set; } = string.Empty;
     public string UsersTable { get; set; } = "sogbogo_users";
     public string PreferencesTable { get; set; } = "sogbogo_travel_preferences";
+    public string DestinationPostsTable { get; set; } = "sogbogo_destination_posts";
+    public string SavedGemsTable { get; set; } = "sogbogo_saved_gems";
+    public string AdminGemsTable { get; set; } = "sogbogo_admin_gems";
+    public string ItineraryTemplatesTable { get; set; } = "sogbogo_itinerary_templates";
+    public string AdminPartnersTable { get; set; } = "sogbogo_admin_partners";
 }
 
 public sealed class SupabaseUserAccountStore : IUserAccountStore

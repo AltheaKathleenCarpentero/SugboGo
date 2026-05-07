@@ -1,18 +1,28 @@
 // program.cs
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore;
+using SugboGo.Data;
 using SugboGo.Services.Admin;
 using SugboGo.Services.Auth;
 using SugboGo.Services.Dashboard;
 using SugboGo.Services.Travel;
+using dotenv.net;
+
+DotEnv.Load();
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddEnvironmentVariables();
+
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddDbContext<SugboGoDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "App_Data", "DataProtectionKeys")))
     .SetApplicationName("SogboGo");
@@ -31,10 +41,25 @@ builder.Services.AddHttpClient<SupabaseTravelPreferenceStore>();
 builder.Services.AddScoped<TravelPreferenceStoreFactory>();
 builder.Services.AddScoped<ITravelPreferenceStore>(provider => provider.GetRequiredService<TravelPreferenceStoreFactory>().Create());
 builder.Services.AddSingleton<ICebuRecommendationService, CebuRecommendationService>();
-builder.Services.AddScoped<IAdminDataStore, LocalJsonAdminDataStore>();
+builder.Services.AddScoped<LocalJsonAdminDataStore>();
+builder.Services.AddScoped<PostgresAdminDataStore>();
+builder.Services.AddHttpClient<SupabaseAdminDataStore>();
+builder.Services.AddScoped<AdminDataStoreFactory>();
+builder.Services.AddScoped<IAdminDataStore>(provider => provider.GetRequiredService<AdminDataStoreFactory>().Create());
 builder.Services.AddScoped<IAdminOperationsService, AdminOperationsService>();
-builder.Services.AddScoped<IDestinationPostStore, LocalJsonDestinationPostStore>();
-builder.Services.AddScoped<IUserSavedGemStore, LocalJsonUserSavedGemStore>();
+
+builder.Services.AddScoped<LocalJsonDestinationPostStore>();
+builder.Services.AddScoped<PostgresDestinationPostStore>();
+builder.Services.AddHttpClient<SupabaseDestinationPostStore>();
+builder.Services.AddScoped<DestinationPostStoreFactory>();
+builder.Services.AddScoped<IDestinationPostStore>(provider => provider.GetRequiredService<DestinationPostStoreFactory>().Create());
+
+builder.Services.AddScoped<LocalJsonUserSavedGemStore>();
+builder.Services.AddScoped<PostgresUserSavedGemStore>();
+builder.Services.AddHttpClient<SupabaseUserSavedGemStore>();
+builder.Services.AddScoped<UserSavedGemStoreFactory>();
+builder.Services.AddScoped<IUserSavedGemStore>(provider => provider.GetRequiredService<UserSavedGemStoreFactory>().Create());
+
 builder.Services.AddScoped<IDashboardExperienceService, DashboardExperienceService>();
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
