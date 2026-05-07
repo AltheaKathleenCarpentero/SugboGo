@@ -31,7 +31,10 @@ builder.Services.AddHttpClient<SupabaseTravelPreferenceStore>();
 builder.Services.AddScoped<TravelPreferenceStoreFactory>();
 builder.Services.AddScoped<ITravelPreferenceStore>(provider => provider.GetRequiredService<TravelPreferenceStoreFactory>().Create());
 builder.Services.AddSingleton<ICebuRecommendationService, CebuRecommendationService>();
+builder.Services.AddScoped<IAdminDataStore, LocalJsonAdminDataStore>();
 builder.Services.AddScoped<IAdminOperationsService, AdminOperationsService>();
+builder.Services.AddScoped<IDestinationPostStore, LocalJsonDestinationPostStore>();
+builder.Services.AddScoped<IUserSavedGemStore, LocalJsonUserSavedGemStore>();
 builder.Services.AddScoped<IDashboardExperienceService, DashboardExperienceService>();
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -41,8 +44,6 @@ builder.Services
         options.LoginPath = "/Account";
         options.LogoutPath = "/Account/Logout";
         options.AccessDeniedPath = "/Account/AccessDenied";
-        options.SlidingExpiration = true;
-        options.ExpireTimeSpan = TimeSpan.FromDays(14);
     });
 
 var app = builder.Build();

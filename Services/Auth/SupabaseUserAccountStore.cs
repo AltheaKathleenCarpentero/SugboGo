@@ -31,6 +31,25 @@ public sealed class SupabaseUserAccountStore : IUserAccountStore
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _options.ServiceRoleKey);
     }
 
+    public async Task<List<UserAccount>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        using var response = await _httpClient.GetAsync($"{_options.UsersTable}?select=id,email,full_name,password_hash,role,created_at&order=created_at.desc", cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        var rows = await JsonSerializer.DeserializeAsync<List<SupabaseUserRow>>(stream, _jsonOptions, cancellationToken) ?? [];
+
+        return rows.Select(row => new UserAccount
+        {
+            Id = row.Id,
+            Email = row.Email,
+            FullName = row.FullName,
+            PasswordHash = row.PasswordHash,
+            Role = AccountRoles.Normalize(row.Role),
+            CreatedAt = row.CreatedAt
+        }).ToList();
+    }
+
     public async Task<UserAccount?> FindByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         var encodedEmail = Uri.EscapeDataString(email.Trim().ToLowerInvariant());

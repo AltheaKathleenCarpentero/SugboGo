@@ -1,29 +1,59 @@
 using System.Security.Claims;
 using SugboGo.Models;
+using SugboGo.Services.Travel;
 
 namespace SugboGo.Services.Dashboard;
 
 public sealed class DashboardExperienceService : IDashboardExperienceService
 {
-    public DashboardViewModel BuildForUser(ClaimsPrincipal user)
+    private readonly IDestinationPostStore _postStore;
+    private readonly ITravelPreferenceStore _preferenceStore;
+    private readonly IUserSavedGemStore _savedGemStore;
+
+    public DashboardExperienceService(
+        IDestinationPostStore postStore,
+        ITravelPreferenceStore preferenceStore,
+        IUserSavedGemStore savedGemStore)
+    {
+        _postStore = postStore;
+        _preferenceStore = preferenceStore;
+        _savedGemStore = savedGemStore;
+    }
+
+    public async Task<DashboardViewModel> BuildForUserAsync(ClaimsPrincipal user, CancellationToken cancellationToken = default)
     {
         var fullName = user.FindFirstValue(ClaimTypes.Name) ?? "Traveler";
         var email = user.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+        var userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         var firstName = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "Traveler";
         var seed = Math.Abs(email.GetHashCode());
         var hasTrip = !email.Contains("notrip", StringComparison.OrdinalIgnoreCase);
+        var preferences = string.IsNullOrWhiteSpace(userId)
+            ? null
+            : await _preferenceStore.FindLatestByUserIdAsync(userId, cancellationToken);
+        var posts = await _postStore.GetAllAsync(cancellationToken);
+        var savedGems = string.IsNullOrWhiteSpace(userId)
+            ? []
+            : await _savedGemStore.GetByUserIdAsync(userId, cancellationToken);
 
         return new DashboardViewModel
         {
             FirstName = firstName,
+            UserInitial = firstName[..1].ToUpperInvariant(),
             Greeting = BuildGreeting(firstName),
             ActiveTrip = hasTrip ? BuildActiveTrip(firstName, seed) : null,
-            VibeTags = BuildVibeTags(seed),
+            SocialFeed = BuildSocialFeed(posts, preferences),
+            VibeTags = BuildVibeTags(preferences),
             CuratedGems = BuildCuratedGems(seed),
             Bookings = BuildBookings(hasTrip),
-            SavedGems = BuildSavedGems(seed),
+            SavedGems = savedGems.Select(gem => new SavedGemViewModel
+            {
+                Id = gem.Id,
+                Title = gem.Title,
+                Note = gem.Note
+            }).ToList(),
             PastAdventures = BuildPastAdventures(seed),
-            TravelProfile = BuildTravelProfile(seed),
+            TravelProfile = BuildTravelProfile(preferences, seed),
             FeatureSuggestions = BuildFeatureSuggestions()
         };
     }
@@ -66,12 +96,58 @@ public sealed class DashboardExperienceService : IDashboardExperienceService
         };
     }
 
-    private static List<VibeTagViewModel> BuildVibeTags(int seed)
+    private static List<DestinationPostViewModel> BuildSocialFeed(IEnumerable<DestinationPost> posts, TravelPreferenceRecord? preferences)
     {
-        var activeIndex = seed % 4;
-        var tags = new[] { "Urban Explorer", "Island Minimalist", "Street Food Safe", "Design Stays", "Soft Adventure", "After-Dark Cebu" };
+        var selected = preferences?.Interests ?? [];
 
-        return tags.Select((tag, index) => new VibeTagViewModel { Label = tag, IsActive = index == activeIndex || index == 0 }).ToList();
+        return posts.Select(post =>
+        {
+            var tagKey = NormalizeInterest(post.Tag);
+            var isMatch = selected.Any(interest => NormalizeInterest(interest) == tagKey);
+
+            return new DestinationPostViewModel
+            {
+                Id = post.Id,
+                AuthorName = post.AuthorName,
+                AuthorInitial = BuildInitial(post.AuthorName),
+                AuthorRole = string.Equals(post.UserId, preferences?.UserId, StringComparison.OrdinalIgnoreCase) ? "SugboGo client" : "Cebu traveler",
+                Timestamp = post.CreatedAt.ToLocalTime().ToString("MMM d, h:mm tt"),
+                DestinationName = post.DestinationName,
+                Location = post.Location,
+                Description = post.Description,
+                Caption = post.Caption,
+                ImageUrl = BuildPostImageUrl(post.ImageFileName),
+                Tags = string.IsNullOrWhiteSpace(post.Tag) ? ["Cebu"] : [BuildInterestLabel(post.Tag)],
+                Likes = post.Likes,
+                Comments = post.Comments,
+                CommentsList = (post.CommentsList ?? []).Select(c => new PostCommentViewModel
+                {
+                    AuthorName = c.AuthorName,
+                    Text = c.Text,
+                    Timestamp = c.CreatedAt.ToLocalTime().ToString("MMM d, h:mm tt")
+                }).ToList(),
+                RecommendationReason = isMatch
+                    ? "This matches your saved Cebu travel interests."
+                    : "This post is part of the live Cebu community feed.",
+                MatchScore = isMatch ? 92 : 74
+            };
+        }).ToList();
+    }
+
+    private static List<VibeTagViewModel> BuildVibeTags(TravelPreferenceRecord? preferences)
+    {
+        if (preferences?.Interests.Count > 0)
+        {
+            return TravelInterestCatalog.Options
+                .Where(option => preferences.Interests.Contains(option.Key, StringComparer.OrdinalIgnoreCase))
+                .Select(option => new VibeTagViewModel { Label = option.Label, IsActive = true })
+                .ToList();
+        }
+
+        return TravelInterestCatalog.Options
+            .Take(6)
+            .Select(option => new VibeTagViewModel { Label = option.Label, IsActive = false })
+            .ToList();
     }
 
     private static List<GemRecommendationViewModel> BuildCuratedGems(int seed)
@@ -101,16 +177,6 @@ public sealed class DashboardExperienceService : IDashboardExperienceService
         return bookings;
     }
 
-    private static List<SavedGemViewModel> BuildSavedGems(int seed)
-    {
-        return
-        [
-            new() { Title = "Alcoy White Rock Swim", Note = seed % 2 == 0 ? "Save for a slow beach day" : "Pairs well with a south Cebu route" },
-            new() { Title = "Parian After-Hours Walk", Note = "Marked for heritage and photo stops" },
-            new() { Title = "North Reclamation Jazz Den", Note = "Great if you stay near the city" }
-        ];
-    }
-
     private static List<PastAdventureViewModel> BuildPastAdventures(int seed)
     {
         if (seed % 3 == 0)
@@ -125,8 +191,25 @@ public sealed class DashboardExperienceService : IDashboardExperienceService
         ];
     }
 
-    private static TravelProfileViewModel BuildTravelProfile(int seed)
+    private static TravelProfileViewModel BuildTravelProfile(TravelPreferenceRecord? preferences, int seed)
     {
+        if (preferences is not null)
+        {
+            var interestLabels = preferences.Interests
+                .Select(BuildInterestLabel)
+                .Where(label => !string.IsNullOrWhiteSpace(label))
+                .ToList();
+
+            return new TravelProfileViewModel
+            {
+                StayPreference = $"{preferences.BudgetRange} comfort profile",
+                FoodPreference = interestLabels.Count == 0 ? "No interests selected yet" : string.Join(", ", interestLabels),
+                PacePreference = $"{preferences.TravelPace} pace, adventure level {preferences.AdventureLevel}/5",
+                Notifications = "Hidden Gem alerts and itinerary changes enabled",
+                PaymentSummary = "Add a payment method when booking persistence is enabled"
+            };
+        }
+
         return new TravelProfileViewModel
         {
             StayPreference = seed % 2 == 0 ? "Boutique hotels over luxury chains" : "Quiet design stays near local food",
@@ -136,6 +219,26 @@ public sealed class DashboardExperienceService : IDashboardExperienceService
             PaymentSummary = "Visa ending 4242 ready for Quick-Pay"
         };
     }
+
+    private static string BuildPostImageUrl(string imageFileName)
+    {
+        return string.IsNullOrWhiteSpace(imageFileName)
+            ? "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80"
+            : $"/uploads/destination-posts/{imageFileName}";
+    }
+
+    private static string BuildInitial(string name)
+    {
+        return name.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?[..1].ToUpperInvariant() ?? "T";
+    }
+
+    private static string BuildInterestLabel(string key)
+    {
+        return TravelInterestCatalog.Options.FirstOrDefault(option => option.Key == NormalizeInterest(key))?.Label
+            ?? key.Trim();
+    }
+
+    private static string NormalizeInterest(string value) => value.Trim().ToLowerInvariant().Replace(" ", "-");
 
     private static List<DashboardFeatureSuggestionViewModel> BuildFeatureSuggestions()
     {

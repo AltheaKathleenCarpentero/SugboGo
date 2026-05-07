@@ -15,6 +15,38 @@ public sealed class PostgresUserAccountStore : IUserAccountStore
             ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is not configured.");
     }
 
+    public async Task<List<UserAccount>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync(cancellationToken);
+
+        const string sql = """
+            select id, email, full_name, password_hash, role, created_at
+            from sogbogo_users
+            order by created_at desc;
+            """;
+
+        var users = new List<UserAccount>();
+        await using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(sql, connection);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            users.Add(new UserAccount
+            {
+                Id = reader.GetString(0),
+                Email = reader.GetString(1),
+                FullName = reader.GetString(2),
+                PasswordHash = reader.GetString(3),
+                Role = AccountRoles.Normalize(reader.GetString(4)),
+                CreatedAt = reader.GetFieldValue<DateTimeOffset>(5)
+            });
+        }
+
+        return users;
+    }
+
     public async Task<UserAccount?> FindByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         await EnsureInitializedAsync(cancellationToken);
