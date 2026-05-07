@@ -434,6 +434,99 @@ const initDashboard = () => {
     const surpriseTitle = dashboard.querySelector('[data-surprise-title]');
     const surpriseReason = dashboard.querySelector('[data-surprise-reason]');
     const gems = [...dashboard.querySelectorAll('[data-surprise-gem]')];
+    const feedForm = dashboard.querySelector('[data-feed-form]');
+    const feedList = dashboard.querySelector('[data-feed-list]');
+    const photoInput = dashboard.querySelector('[data-feed-photo]');
+    const photoPreview = dashboard.querySelector('[data-feed-preview]');
+    const focusComposer = dashboard.querySelector('[data-focus-composer]');
+    const currentInitial = dashboard.querySelector('.feed-profile-chip')?.textContent?.trim() || 'T';
+    const currentName = dashboard.querySelector('.feed-profile-card h2')?.textContent?.trim() || 'Traveler';
+    const antiForgeryToken = dashboard.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+    const savedList = dashboard.querySelector('[data-saved-list]');
+    const noSavedGemsMessage = dashboard.querySelector('[data-no-saved-gems]');
+    const escapeHtml = (value) => String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+
+    const bindSavedGem = (li) => {
+        const removeBtn = li.querySelector('[data-remove-gem]');
+
+        removeBtn?.addEventListener('click', () => {
+            const removeUrl = removeBtn.dataset.removeUrl;
+
+            if (removeUrl) {
+                fetch(removeUrl, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': antiForgeryToken
+                    }
+                }).then((response) => {
+                    if (response.ok) {
+                        li.remove();
+
+                        if (savedList && savedList.children.length === 0) {
+                            savedList.remove();
+                            const p = document.createElement('p');
+                            p.dataset.noSavedGems = '';
+                            p.textContent = 'Saved gems will appear here once save actions are persisted.';
+                            dashboard.querySelector('#gem-vault-panel')?.appendChild(p);
+                        }
+                    }
+                });
+            }
+        });
+    };
+
+    dashboard.querySelectorAll('[data-saved-list] li').forEach(bindSavedGem);
+
+    dashboard.querySelectorAll('[data-save-gem]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const saveUrl = btn.dataset.saveUrl;
+
+            if (saveUrl) {
+                fetch(saveUrl, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': antiForgeryToken
+                    }
+                })
+                    .then((response) => response.ok ? response.json() : null)
+                    .then((data) => {
+                        if (!data) {
+                            return;
+                        }
+
+                        btn.textContent = 'Saved';
+                        btn.disabled = true;
+
+                        let list = dashboard.querySelector('[data-saved-list]');
+
+                        if (!list) {
+                            dashboard.querySelector('[data-no-saved-gems]')?.remove();
+                            list = document.createElement('ul');
+                            list.className = 'feed-saved-list';
+                            list.dataset.savedList = '';
+                            dashboard.querySelector('#gem-vault-panel')?.appendChild(list);
+                        }
+
+                        const li = document.createElement('li');
+                        li.dataset.savedGemId = data.id;
+                        li.innerHTML = `
+                            <div>
+                                <strong>${escapeHtml(data.title)}</strong>
+                                <span>Just saved from recommendations.</span>
+                            </div>
+                            <button type="button" data-remove-gem data-remove-url="/Dashboard/RemoveGem?gemId=${data.id}" aria-label="Remove gem">&times;</button>`;
+
+                        list.prepend(li);
+                        bindSavedGem(li);
+                    });
+            }
+        });
+    });
 
     vibeTags.forEach((tag) => {
         tag.addEventListener('click', () => {
@@ -455,6 +548,224 @@ const initDashboard = () => {
         surpriseReason.textContent = gem.dataset.reason || 'Matched to your travel profile.';
         surprisePanel.hidden = false;
         surprisePanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    const bindFeedPost = (post) => {
+        const likeButton = post.querySelector('[data-like-button]');
+        const commentToggle = post.querySelector('[data-comment-toggle]');
+        const shareButton = post.querySelector('[data-share-button]');
+        const commentForm = post.querySelector('[data-comment-form]');
+        const commentInput = commentForm?.querySelector('input');
+        const comments = post.querySelector('[data-comments]');
+        const likeCount = post.querySelector('[data-like-count]');
+        const commentCount = post.querySelector('[data-comment-count]');
+
+        likeButton?.addEventListener('click', () => {
+            const likeUrl = likeButton.dataset.likeUrl;
+
+            if (likeUrl) {
+                fetch(likeUrl, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': antiForgeryToken
+                    }
+                })
+                    .then((response) => response.ok ? response.json() : null)
+                    .then((data) => {
+                        if (!data || !likeCount) {
+                            return;
+                        }
+
+                        likeButton.classList.add('is-liked');
+                        likeCount.textContent = String(data.likes);
+                    })
+                    .catch(() => {});
+                return;
+            }
+
+            const isLiked = likeButton.classList.toggle('is-liked');
+            const currentLikes = Number(likeCount?.textContent || '0');
+
+            if (likeCount) {
+                likeCount.textContent = String(Math.max(0, currentLikes + (isLiked ? 1 : -1)));
+            }
+        });
+
+        commentToggle?.addEventListener('click', () => {
+            commentInput?.focus();
+        });
+
+        shareButton?.addEventListener('click', async () => {
+            const destination = post.querySelector('.feed-post__title-row h2')?.textContent?.trim() || 'Cebu destination';
+            const text = `Check out ${destination} on SugboGo.`;
+
+            if (navigator.share) {
+                await navigator.share({ title: destination, text }).catch(() => {});
+                return;
+            }
+
+            await navigator.clipboard?.writeText(text).catch(() => {});
+            shareButton.textContent = 'Copied';
+            window.setTimeout(() => {
+                shareButton.textContent = 'Share';
+            }, 1200);
+        });
+
+        commentForm?.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            if (!commentInput || !comments || !commentInput.value.trim()) {
+                return;
+            }
+
+            const commentUrl = commentForm.dataset.commentUrl;
+            const text = commentInput.value.trim();
+
+            if (commentUrl) {
+                const formData = new FormData();
+                formData.append('text', text);
+
+                fetch(commentUrl, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': antiForgeryToken
+                    },
+                    body: formData
+                })
+                    .then((response) => response.ok ? response.json() : null)
+                    .then((data) => {
+                        if (!data) {
+                            return;
+                        }
+
+                        const comment = document.createElement('div');
+                        comment.className = 'feed-comment';
+                        comment.innerHTML = `<strong>${escapeHtml(data.authorName)}</strong> ${escapeHtml(data.text)} <small>${escapeHtml(data.timestamp)}</small>`;
+                        comments.prepend(comment);
+
+                        if (commentCount) {
+                            commentCount.textContent = String(data.commentCount);
+                        }
+
+                        commentInput.value = '';
+                    })
+                    .catch(() => {});
+                return;
+            }
+
+            const comment = document.createElement('div');
+            comment.className = 'feed-comment';
+            comment.innerHTML = `<strong>${escapeHtml(currentName)}</strong> ${escapeHtml(text)}`;
+            comments.prepend(comment);
+
+            if (commentCount) {
+                commentCount.textContent = String(Number(commentCount.textContent || '0') + 1);
+            }
+
+            commentInput.value = '';
+        });
+    };
+
+    dashboard.querySelectorAll('[data-feed-post]').forEach(bindFeedPost);
+
+    focusComposer?.addEventListener('click', () => {
+        feedForm?.querySelector('input[name="destination"]')?.focus();
+    });
+
+    photoInput?.addEventListener('change', () => {
+        const file = photoInput.files?.[0];
+
+        if (!file || !photoPreview) {
+            return;
+        }
+
+        photoPreview.src = URL.createObjectURL(file);
+        photoPreview.hidden = false;
+    });
+
+    feedForm?.addEventListener('submit', (event) => {
+        if (feedForm.dataset.serverForm !== undefined) {
+            return;
+        }
+
+        event.preventDefault();
+
+        if (!feedList) {
+            return;
+        }
+
+        const data = new FormData(feedForm);
+        const destination = String(data.get('destination') || '').trim();
+        const location = String(data.get('location') || '').trim();
+        const description = String(data.get('description') || '').trim();
+        const caption = String(data.get('caption') || '').trim();
+        const tag = String(data.get('tag') || 'Cebu').trim();
+        const imageUrl = photoPreview && !photoPreview.hidden
+            ? photoPreview.src
+            : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80';
+
+        if (!destination || !location || !description) {
+            return;
+        }
+
+        const post = document.createElement('article');
+        post.className = 'feed-post';
+        post.dataset.feedPost = '';
+        post.innerHTML = `
+            <header class="feed-post__header">
+                <div class="feed-avatar">${escapeHtml(currentInitial)}</div>
+                <div>
+                    <strong>${escapeHtml(currentName)}</strong>
+                    <span>SugboGo client · Just now</span>
+                </div>
+            </header>
+            <div class="feed-post__body">
+                <div class="feed-post__title-row">
+                    <div>
+                        <h2>${escapeHtml(destination)}</h2>
+                        <p>${escapeHtml(location)}</p>
+                    </div>
+                    <span>New AI signal</span>
+                </div>
+                <p>${escapeHtml(description)}</p>
+                <p class="feed-caption">${escapeHtml(caption || 'Fresh Cebu travel note.')}</p>
+                <div class="feed-tags">
+                    <span>#${escapeHtml(tag)}</span>
+                    <span>#Cebu</span>
+                </div>
+            </div>
+            <img class="feed-post__image" src="${escapeHtml(imageUrl)}" alt="${escapeHtml(destination)} in ${escapeHtml(location)}" />
+            <div class="feed-ai-note">
+                <strong>Recommended for others</strong>
+                <span>This post will train recommendations through its tags, likes, comments, and destination location.</span>
+            </div>
+            <footer class="feed-engagement">
+                <div class="feed-counts">
+                    <span><b data-like-count>0</b> likes</span>
+                    <span><b data-comment-count>0</b> comments</span>
+                </div>
+                <div class="feed-actions">
+                    <button type="button" data-like-button>Like</button>
+                    <button type="button" data-comment-toggle>Comment</button>
+                    <button type="button" data-share-button>Share</button>
+                </div>
+                <form class="feed-comment-form" data-comment-form>
+                    <input type="text" placeholder="Write a comment..." aria-label="Write a comment" required />
+                    <button type="submit">Send</button>
+                </form>
+                <div class="feed-comments" data-comments></div>
+            </footer>`;
+
+        feedList.prepend(post);
+        bindFeedPost(post);
+        feedForm.reset();
+
+        if (photoPreview) {
+            photoPreview.hidden = true;
+            photoPreview.removeAttribute('src');
+        }
+
+        post.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 };
 

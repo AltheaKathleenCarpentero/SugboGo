@@ -3,8 +3,10 @@ namespace SugboGo.Models;
 public sealed class DashboardViewModel
 {
     public string FirstName { get; set; } = "Traveler";
+    public string UserInitial { get; set; } = "T";
     public string Greeting { get; set; } = string.Empty;
     public ActiveTripViewModel? ActiveTrip { get; set; }
+    public List<DestinationPostViewModel> SocialFeed { get; set; } = [];
     public List<VibeTagViewModel> VibeTags { get; set; } = [];
     public List<GemRecommendationViewModel> CuratedGems { get; set; } = [];
     public List<BookingVaultItemViewModel> Bookings { get; set; } = [];
@@ -45,6 +47,34 @@ public sealed class MapPinViewModel
     public int Y { get; set; }
 }
 
+public sealed class DestinationPostViewModel
+{
+    public string Id { get; set; } = string.Empty;
+    public string AuthorName { get; set; } = string.Empty;
+    public string AuthorInitial { get; set; } = string.Empty;
+    public string AuthorRole { get; set; } = string.Empty;
+    public string Timestamp { get; set; } = string.Empty;
+    public string DestinationName { get; set; } = string.Empty;
+    public string Location { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Caption { get; set; } = string.Empty;
+    public string ImageUrl { get; set; } = string.Empty;
+    public List<string> Tags { get; set; } = [];
+    public int Likes { get; set; }
+    public int Comments { get; set; }
+    public List<PostCommentViewModel> CommentsList { get; set; } = [];
+    public bool IsLikedByUser { get; set; }
+    public string RecommendationReason { get; set; } = string.Empty;
+    public int MatchScore { get; set; }
+}
+
+public sealed class PostCommentViewModel
+{
+    public string AuthorName { get; set; } = string.Empty;
+    public string Text { get; set; } = string.Empty;
+    public string Timestamp { get; set; } = string.Empty;
+}
+
 public sealed class VibeTagViewModel
 {
     public string Label { get; set; } = string.Empty;
@@ -71,6 +101,7 @@ public sealed class BookingVaultItemViewModel
 
 public sealed class SavedGemViewModel
 {
+    public string Id { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string Note { get; set; } = string.Empty;
 }

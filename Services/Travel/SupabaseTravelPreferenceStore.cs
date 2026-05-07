@@ -24,6 +24,16 @@ public sealed class SupabaseTravelPreferenceStore : ITravelPreferenceStore
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _options.ServiceRoleKey);
     }
 
+    public async Task<List<TravelPreferenceRecord>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        using var response = await _httpClient.GetAsync($"{_options.PreferencesTable}?select=*&order=updated_at.desc", cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        var rows = await JsonSerializer.DeserializeAsync<List<SupabasePreferenceRow>>(stream, _jsonOptions, cancellationToken) ?? [];
+        return rows.Select(row => row.ToRecord(_jsonOptions)).ToList();
+    }
+
     public async Task<TravelPreferenceRecord?> FindLatestByUserIdAsync(string userId, CancellationToken cancellationToken = default)
     {
         var encodedUserId = Uri.EscapeDataString(userId);

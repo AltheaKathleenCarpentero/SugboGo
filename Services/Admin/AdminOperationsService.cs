@@ -1,65 +1,176 @@
 using SugboGo.Models;
+using SugboGo.Services.Auth;
+using SugboGo.Services.Dashboard;
+using SugboGo.Services.Travel;
 
 namespace SugboGo.Services.Admin;
 
 public sealed class AdminOperationsService : IAdminOperationsService
 {
-    public AdminDashboardViewModel BuildDashboard()
+    private readonly IUserAccountStore _userStore;
+    private readonly ITravelPreferenceStore _preferenceStore;
+    private readonly IDestinationPostStore _postStore;
+    private readonly IAdminDataStore _adminDataStore;
+
+    public AdminOperationsService(
+        IUserAccountStore userStore,
+        ITravelPreferenceStore preferenceStore,
+        IDestinationPostStore postStore,
+        IAdminDataStore adminDataStore)
     {
+        _userStore = userStore;
+        _preferenceStore = preferenceStore;
+        _postStore = postStore;
+        _adminDataStore = adminDataStore;
+    }
+
+    public async Task<AdminDashboardViewModel> BuildDashboardAsync(CancellationToken cancellationToken = default)
+    {
+        var users = await _userStore.GetAllAsync(cancellationToken);
+        var preferences = await _preferenceStore.GetAllAsync(cancellationToken);
+        var posts = await _postStore.GetAllAsync(cancellationToken);
+        var gems = await _adminDataStore.GetGemsAsync(cancellationToken);
+        var templates = await _adminDataStore.GetTemplatesAsync(cancellationToken);
+        var partners = await _adminDataStore.GetPartnersAsync(cancellationToken);
+        var latestUser = users.OrderByDescending(user => user.CreatedAt).FirstOrDefault();
+
         return new AdminDashboardViewModel
         {
-            Kpis =
-            [
-                new() { Label = "Active Adventures", Value = "18", Delta = "6 travelers currently in Cebu City" },
-                new() { Label = "Pending Curations", Value = "11", Delta = "4 need first draft today" },
-                new() { Label = "Revenue", Value = "PHP 842K", Delta = "+18% this month" },
-                new() { Label = "Partner Holds", Value = "37", Delta = "9 expire within 24h" }
-            ],
-            VibeTrends =
-            [
-                new() { Vibe = "Urban Explorer", Percentage = 60 },
-                new() { Vibe = "Heritage Hunter", Percentage = 30 },
-                new() { Vibe = "Island Minimalist", Percentage = 7 },
-                new() { Vibe = "Soft Adventure", Percentage = 3 }
-            ],
-            UrgentAlerts =
-            [
-                new() { Traveler = "Mika Santos", Issue = "Transport delay near Carbon Market", Location = "Carbon Market", ChatUrl = "https://wa.me/639170002841" },
-                new() { Traveler = "Jon Reed", Issue = "Guide awaiting weather approval", Location = "Busay ridge", ChatUrl = "https://wa.me/639170002841" },
-                new() { Traveler = "Lea Tan", Issue = "Dietary note missing from dinner partner", Location = "Kamagayan", ChatUrl = "https://wa.me/639170002841" }
-            ],
-            Gems =
-            [
-                new() { Name = "Hidden Heritage Cafe", Category = "Cafe", FlashpackerScore = 9, QualityCheckDate = "May 1, 2026", ContactPerson = "Ana Lim", Latitude = 10.2961m, Longitude = 123.8993m, Status = "Active", MapX = 34, MapY = 58 },
-                new() { Name = "Private Mountain View", Category = "Viewpoint", FlashpackerScore = 8, QualityCheckDate = "Apr 22, 2026", ContactPerson = "Ramon Uy", Latitude = 10.3713m, Longitude = 123.8830m, Status = "Seasonal", MapX = 47, MapY = 28 },
-                new() { Name = "Museo Alley Studio", Category = "Museum", FlashpackerScore = 7, QualityCheckDate = "Apr 18, 2026", ContactPerson = "Tessa Co", Latitude = 10.3002m, Longitude = 123.8967m, Status = "Under Review", MapX = 39, MapY = 54 },
-                new() { Name = "Curated Rooftop Dinner", Category = "Dining", FlashpackerScore = 10, QualityCheckDate = "May 3, 2026", ContactPerson = "Marco Dizon", Latitude = 10.3190m, Longitude = 123.9057m, Status = "Active", MapX = 63, MapY = 48 }
-            ],
-            Templates =
-            [
-                new() { Name = "Urban Explorer 36h", Vibe = "Urban Explorer", Stops = "Cafe, gallery, rooftop dinner", AvgDuration = "1.5 days" },
-                new() { Name = "Heritage Hunter Core", Vibe = "Heritage Hunter", Stops = "Parian walk, museum, ancestral supper", AvgDuration = "1 day" },
-                new() { Name = "Soft Mountain Reset", Vibe = "Soft Adventure", Stops = "Design stay, ridge route, garden hideout", AvgDuration = "2 days" }
-            ],
+            Kpis = BuildKpis(users, preferences, posts, latestUser),
+            VibeTrends = BuildVibeTrends(preferences),
+            UrgentAlerts = BuildUrgentAlerts(users, preferences),
+            Gems = gems.Select(g => new GemAdminViewModel
+            {
+                Name = g.Name,
+                Category = g.Category,
+                FlashpackerScore = g.FlashpackerScore,
+                QualityCheckDate = g.QualityCheckDate,
+                ContactPerson = g.ContactPerson,
+                Latitude = g.Latitude,
+                Longitude = g.Longitude,
+                Status = g.Status,
+                MapX = g.MapX,
+                MapY = g.MapY
+            }).ToList(),
+            Templates = templates.Select(t => new ItineraryTemplateViewModel
+            {
+                Name = t.Name,
+                Vibe = t.Vibe,
+                Stops = t.Stops,
+                AvgDuration = t.AvgDuration
+            }).ToList(),
             Pipeline = BuildPipeline(),
-            Flashpackers =
-            [
-                new() { Name = "Mika Santos", Vibe = "Urban Explorer", Constraints = "Allergic to seafood, private cars only", Feedback = "Hidden cafe was great, road was rough for luggage.", CebuTrips = 2 },
-                new() { Name = "Andre Costa", Vibe = "Island Minimalist", Constraints = "No early hikes, prefers quiet rooms", Feedback = "Loved the low-crowd beach timing.", CebuTrips = 1 },
-                new() { Name = "Priya Shah", Vibe = "Heritage Hunter", Constraints = "Vegetarian, needs flexible pickup", Feedback = "Guide pacing was excellent.", CebuTrips = 3 }
-            ],
-            Partners =
-            [
-                new() { Name = "The Helix House", Type = "Boutique hotel", Contact = "Nina Yu", Commission = "15%", LastAudit = "Apr 30, 2026", Status = "Excellent" },
-                new() { Name = "South Ridge Guides", Type = "Local guide", Contact = "Ramon Uy", Commission = "Per route", LastAudit = "Apr 22, 2026", Status = "Watch weather" },
-                new() { Name = "Red Door Supper Club", Type = "Dining", Contact = "Marco Dizon", Commission = "12%", LastAudit = "May 3, 2026", Status = "Excellent" }
-            ],
-            CollaborationQueue =
-            [
-                new() { SuggestedBy = "Local Expert: Ana", Spot = "Mactan Ceramic Courtyard", Reason = "Strong design signal for Urban Explorer profiles.", ApprovalStatus = "Needs admin approval" },
-                new() { SuggestedBy = "Developer: Ken", Spot = "Liloan Moon Tide Table", Reason = "Route engine says it pairs well with north transfers.", ApprovalStatus = "Map validation pending" }
-            ]
+            Flashpackers = BuildFlashpackers(users, preferences, posts),
+            Partners = partners.Select(p => new PartnerAdminViewModel
+            {
+                Name = p.Name,
+                Type = p.Type,
+                Contact = p.Contact,
+                Commission = p.Commission,
+                LastAudit = p.LastAudit,
+                Status = p.Status
+            }).ToList(),
+            CollaborationQueue = BuildCollaborationQueue()
         };
+    }
+
+    private static List<AdminKpiViewModel> BuildKpis(
+        IReadOnlyCollection<UserAccount> users,
+        IReadOnlyCollection<TravelPreferenceRecord> preferences,
+        IReadOnlyCollection<DestinationPost> posts,
+        UserAccount? latestUser)
+    {
+        return
+        [
+            new() { Label = "Total Users", Value = users.Count.ToString(), Delta = $"{users.Count(user => AccountRoles.Normalize(user.Role) == AccountRoles.Client)} client account(s)" },
+            new() { Label = "Total Posts", Value = posts.Count.ToString(), Delta = $"{posts.Sum(post => post.Likes)} community like(s)" },
+            new() { Label = "Preferences Submitted", Value = preferences.Count.ToString(), Delta = $"{preferences.Select(preference => preference.UserId).Distinct().Count()} traveler profile(s)" },
+            new() { Label = "Latest Signup", Value = latestUser?.CreatedAt.ToLocalTime().ToString("MMM d") ?? "None", Delta = latestUser?.Email ?? "No registered users yet" }
+        ];
+    }
+
+    private static List<VibeTrendViewModel> BuildVibeTrends(IEnumerable<TravelPreferenceRecord> preferences)
+    {
+        var interestCounts = preferences
+            .SelectMany(preference => preference.Interests)
+            .Select(NormalizeInterest)
+            .Where(interest => !string.IsNullOrWhiteSpace(interest))
+            .GroupBy(interest => interest)
+            .Select(group => new { Key = group.Key, Count = group.Count() })
+            .OrderByDescending(item => item.Count)
+            .ThenBy(item => item.Key)
+            .ToList();
+
+        var total = interestCounts.Sum(item => item.Count);
+
+        if (total == 0)
+        {
+            return [new() { Vibe = "No preferences yet", Percentage = 0 }];
+        }
+
+        return interestCounts
+            .Take(6)
+            .Select(item => new VibeTrendViewModel
+            {
+                Vibe = BuildInterestLabel(item.Key),
+                Percentage = (int)Math.Round(item.Count * 100m / total)
+            })
+            .ToList();
+    }
+
+    private static List<UrgentAlertViewModel> BuildUrgentAlerts(
+        IReadOnlyCollection<UserAccount> users,
+        IReadOnlyCollection<TravelPreferenceRecord> preferences)
+    {
+        var missingPreferences = users
+            .Where(user => AccountRoles.Normalize(user.Role) == AccountRoles.Client)
+            .Where(user => preferences.All(preference => preference.UserId != user.Id))
+            .Take(3)
+            .Select(user => new UrgentAlertViewModel
+            {
+                Traveler = user.FullName,
+                Issue = "No travel preference survey submitted yet",
+                Location = user.Email,
+                ChatUrl = "https://wa.me/639170002841"
+            })
+            .ToList();
+
+        return missingPreferences.Count == 0
+            ? [new() { Traveler = "System", Issue = "All registered clients have preference data or no clients are registered yet.", Location = "SugboGo data flow", ChatUrl = "https://wa.me/639170002841" }]
+            : missingPreferences;
+    }
+
+    private static List<FlashpackerProfileViewModel> BuildFlashpackers(
+        IEnumerable<UserAccount> users,
+        IEnumerable<TravelPreferenceRecord> preferences,
+        IEnumerable<DestinationPost> posts)
+    {
+        var preferenceByUser = preferences
+            .GroupBy(preference => preference.UserId)
+            .ToDictionary(group => group.Key, group => group.OrderByDescending(preference => preference.UpdatedAt).First());
+        var postCounts = posts.GroupBy(post => post.UserId).ToDictionary(group => group.Key, group => group.Count());
+
+        var profiles = users.Select(user =>
+        {
+            preferenceByUser.TryGetValue(user.Id, out var preference);
+            postCounts.TryGetValue(user.Id, out var postCount);
+            var interests = preference?.Interests.Select(BuildInterestLabel).ToList() ?? [];
+
+            return new FlashpackerProfileViewModel
+            {
+                Name = string.IsNullOrWhiteSpace(user.FullName) ? user.Email : user.FullName,
+                Vibe = interests.FirstOrDefault() ?? "Profile pending",
+                Constraints = preference is null
+                    ? "No preference survey submitted yet."
+                    : $"{preference.TravelPace} pace, {preference.BudgetRange}, adventure {preference.AdventureLevel}/5",
+                Feedback = preference?.Notes ?? (interests.Count == 0 ? "No notes yet." : string.Join(", ", interests)),
+                CebuTrips = postCount
+            };
+        }).ToList();
+
+        return profiles.Count == 0
+            ? [new() { Name = "No registered users yet", Vibe = "Waiting for data", Constraints = "Register an account to populate the CRM.", Feedback = "Live user data will appear here.", CebuTrips = 0 }]
+            : profiles;
     }
 
     private static List<PipelineColumnViewModel> BuildPipeline()
@@ -117,4 +228,31 @@ public sealed class AdminOperationsService : IAdminOperationsService
             }
         ];
     }
+
+    private static List<PartnerAdminViewModel> BuildPartners()
+    {
+        return
+        [
+            new() { Name = "The Helix House", Type = "Boutique hotel", Contact = "Nina Yu", Commission = "15%", LastAudit = "Apr 30, 2026", Status = "Excellent" },
+            new() { Name = "South Ridge Guides", Type = "Local guide", Contact = "Ramon Uy", Commission = "Per route", LastAudit = "Apr 22, 2026", Status = "Watch weather" },
+            new() { Name = "Red Door Supper Club", Type = "Dining", Contact = "Marco Dizon", Commission = "12%", LastAudit = "May 3, 2026", Status = "Excellent" }
+        ];
+    }
+
+    private static List<CollaborationSuggestionViewModel> BuildCollaborationQueue()
+    {
+        return
+        [
+            new() { SuggestedBy = "Local Expert: Ana", Spot = "Mactan Ceramic Courtyard", Reason = "Strong design signal for Urban Explorer profiles.", ApprovalStatus = "Needs admin approval" },
+            new() { SuggestedBy = "Developer: Ken", Spot = "Liloan Moon Tide Table", Reason = "Route engine says it pairs well with north transfers.", ApprovalStatus = "Map validation pending" }
+        ];
+    }
+
+    private static string BuildInterestLabel(string key)
+    {
+        return TravelInterestCatalog.Options.FirstOrDefault(option => option.Key == NormalizeInterest(key))?.Label
+            ?? key.Trim();
+    }
+
+    private static string NormalizeInterest(string value) => value.Trim().ToLowerInvariant().Replace(" ", "-");
 }

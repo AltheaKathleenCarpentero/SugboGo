@@ -17,6 +17,30 @@ public sealed class PostgresTravelPreferenceStore : ITravelPreferenceStore
             ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is not configured.");
     }
 
+    public async Task<List<TravelPreferenceRecord>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync(cancellationToken);
+
+        const string sql = """
+            select id, user_id, email, interests_json, adventure_level, travel_pace, budget_range, notes, created_at, updated_at
+            from sogbogo_travel_preferences
+            order by updated_at desc;
+            """;
+
+        var preferences = new List<TravelPreferenceRecord>();
+        await using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(sql, connection);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            preferences.Add(ReadPreference(reader));
+        }
+
+        return preferences;
+    }
+
     public async Task<TravelPreferenceRecord?> FindLatestByUserIdAsync(string userId, CancellationToken cancellationToken = default)
     {
         await EnsureInitializedAsync(cancellationToken);
