@@ -40,6 +40,28 @@
             </article>
 
             <article class="feed-panel">
+                <h2>Your bookings</h2>
+                @if (Model.Bookings.Any())
+                {
+                    <ul class="feed-saved-list">
+                        @foreach (var booking in Model.Bookings)
+                        {
+                            <li>
+                                <div>
+                                    <strong>@booking.Title</strong>
+                                    <span>@booking.Type · @booking.Date · @booking.Status</span>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p>Confirmed trips will appear here after checkout.</p>
+                }
+            </article>
+
+            <article class="feed-panel">
                 <h2>Platform support</h2>
                 <ul class="feed-capability-list">
                     <li><span></span> Authenticated client profile</li>

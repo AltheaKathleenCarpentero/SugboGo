@@ -23,6 +23,11 @@ public sealed class AccountController : Controller
     [HttpGet]
     public IActionResult Index(string? returnUrl = null)
     {
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            return RedirectAuthenticatedUser(returnUrl);
+        }
+
         ViewData["Title"] = "Sign in or create an account";
         return View(new EmailEntryViewModel { ReturnUrl = returnUrl });
     }
@@ -208,6 +213,18 @@ public sealed class AccountController : Controller
         }
 
         return RedirectToRoleHome(user);
+    }
+
+    private IActionResult RedirectAuthenticatedUser(string? returnUrl)
+    {
+        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return LocalRedirect(returnUrl);
+        }
+
+        return User.IsInRole(AccountRoles.Admin)
+            ? RedirectToAction("Index", "Admin")
+            : RedirectToAction("Index", "Dashboard");
     }
 
     private static bool RequiresGmailAccount(string? returnUrl)

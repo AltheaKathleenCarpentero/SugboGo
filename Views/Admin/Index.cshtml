@@ -42,6 +42,44 @@
             }
         </section>
 
+        <section class="admin-section">
+            <div class="admin-section__head">
+                <div>
+                    <p class="lp-kicker">Live Transactions</p>
+                    <h2>Recent Bookings</h2>
+                </div>
+            </div>
+            <article class="admin-panel admin-gem-table">
+                <table style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Traveler</th>
+                            <th>Destination</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var booking in Model.Bookings)
+                        {
+                            <tr>
+                                <td>@booking.UserName</td>
+                                <td>@booking.Destination</td>
+                                <td>@booking.Date</td>
+                                <td><span class="admin-status">@booking.Status</span></td>
+                                <td>PHP @booking.Amount.ToString("N0")</td>
+                            </tr>
+                        }
+                        @if (!Model.Bookings.Any())
+                        {
+                            <tr><td colspan="5" style="text-align:center; padding: 2rem;">No live bookings recorded yet.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </article>
+        </section>
+
         <section class="admin-pulse-grid">
             <article class="admin-panel admin-trends" aria-label="Vibe trends">
                 <div class="admin-panel__head">

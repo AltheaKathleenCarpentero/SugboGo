@@ -335,75 +335,185 @@ const initLandingPage = () => {
 };
 
 const initBookingFlow = () => {
-    const flow = document.querySelector('[data-booking-flow]');
+    const wizard = document.querySelector('[data-booking-wizard]');
 
-    if (!flow) {
+    if (!wizard) {
         return;
     }
 
-    const stages = [...flow.querySelectorAll('[data-stage]')];
-    const progressSteps = [...flow.querySelectorAll('[data-progress-step]')];
-    const stageButtons = [...flow.querySelectorAll('[data-next-stage]')];
-    const swapButtons = [...flow.querySelectorAll('[data-swap-button]')];
-    const payButtons = [...flow.querySelectorAll('[data-pay-method]')];
-    const checkoutForm = flow.querySelector('[data-checkout-form]');
-    const alternatives = [
-        'Mactan Ceramic Courtyard',
-        'Liloan Moon Tide Table',
-        'Busay Garden Hideout',
-        'Alcoy White Rock Swim',
-        'Kamagayan Vinyl Supper'
-    ];
+    const panels = [...wizard.querySelectorAll('[data-booking-step]')];
+    const indicators = [...wizard.querySelectorAll('[data-step-indicator]')];
+    const basePrice = Number(wizard.dataset.basePrice || '0');
+    const destination = wizard.dataset.destination || '';
+    const location = wizard.dataset.location || 'Cebu, Philippines';
+    const imageUrl = wizard.dataset.imageUrl || wizard.querySelector('.booking-hero img')?.src || '';
+    const antiForgeryToken = wizard.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
 
-    const setStage = (stageName) => {
-        stages.forEach((stage) => {
-            const isActive = stage.dataset.stage === stageName;
+    // Elements
+    const totalDisplay = wizard.querySelector('[data-total-display]');
+    const addonsDisplay = wizard.querySelector('[data-addons-display]');
+    const addonsRow = wizard.querySelector('[data-add-ons-row]');
+    const taxesDisplay = wizard.querySelector('[data-taxes-display]');
+    const reviewSummary = wizard.querySelector('[data-review-summary]');
+    const paymentSim = wizard.querySelector('[data-payment-sim]');
+    const confIdDisplay = wizard.querySelector('[data-conf-id]');
 
-            stage.classList.toggle('is-active', isActive);
-            stage.setAttribute('aria-hidden', String(!isActive));
-        });
-
-        progressSteps.forEach((step) => {
-            step.classList.toggle('is-active', step.dataset.progressStep === stageName);
-        });
-
-        flow.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const state = {
+        destinationName: destination,
+        imageUrl,
+        location,
+        travelDate: '',
+        travelerType: 'Solo',
+        travelerCount: 1,
+        selectedActivities: [],
+        selectedAccommodation: '',
+        selectedTransportation: '',
+        travelerNotes: '',
+        basePrice: basePrice,
+        addonsPrice: 0,
+        taxesAndFees: 0,
+        totalPrice: basePrice
     };
 
-    stageButtons.forEach((button) => {
-        button.addEventListener('click', () => setStage(button.dataset.nextStage));
-    });
+    const updatePricing = () => {
+        let addons = 0;
 
-    swapButtons.forEach((button, index) => {
-        button.addEventListener('click', () => {
-            const item = button.closest('[data-journey-item]');
-            const title = item?.querySelector('[data-item-title]');
-            const note = item?.querySelector('[data-swap-note]');
-            const nextTitle = alternatives[(index + Number(button.dataset.swapCount || '0')) % alternatives.length];
+        // Activities
+        wizard.querySelectorAll('input[name="activities"]:checked').forEach((cb) => {
+            addons += Number(cb.dataset.price || '0');
+        });
 
-            button.dataset.swapCount = String(Number(button.dataset.swapCount || '0') + 1);
+        // Accommodation
+        const selectedAcc = wizard.querySelector('input[name="accommodation"]:checked');
+        addons += Number(selectedAcc?.dataset.price || '0');
 
-            if (title) {
-                title.textContent = nextTitle;
+        // Transportation
+        const selectedTrans = wizard.querySelector('input[name="transportation"]:checked');
+        addons += Number(selectedTrans?.dataset.price || '0');
+
+        const taxes = Math.round((basePrice + addons) * 0.12);
+        const total = basePrice + addons + taxes;
+
+        state.addonsPrice = addons;
+        state.addOnsPrice = addons;
+        state.taxesAndFees = taxes;
+        state.totalPrice = total;
+
+        if (totalDisplay) totalDisplay.textContent = total.toLocaleString();
+        if (addonsDisplay) addonsDisplay.textContent = addons.toLocaleString();
+        if (taxesDisplay) taxesDisplay.textContent = taxes.toLocaleString();
+        if (addonsRow) addonsRow.hidden = addons === 0;
+    };
+
+    const setStep = (stepName) => {
+        panels.forEach((p) => {
+            const isActive = p.dataset.bookingStep === stepName;
+            p.classList.toggle('is-active', isActive);
+        });
+
+        indicators.forEach((ind) => {
+            ind.classList.toggle('is-active', ind.dataset.stepIndicator === stepName);
+        });
+
+        if (stepName === 'review') {
+            renderReview();
+        }
+
+        wizard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    const renderReview = () => {
+        if (!reviewSummary) return;
+
+        state.travelDate = wizard.querySelector('input[name="travelDate"]')?.value || '';
+        const travelerSelect = wizard.querySelector('select[name="travelerType"]');
+        state.travelerType = travelerSelect?.value || wizard.querySelector('input[name="travelerType"]:checked')?.value || 'Solo';
+        state.travelerCount = Number(travelerSelect?.selectedOptions?.[0]?.dataset.count || state.travelerCount || '1');
+        state.selectedActivities = [...wizard.querySelectorAll('input[name="activities"]:checked')].map(cb => cb.value);
+        state.selectedAccommodation = wizard.querySelector('input[name="accommodation"]:checked')?.value || '';
+        state.selectedTransportation = wizard.querySelector('input[name="transportation"]:checked')?.value || '';
+        state.travelerNotes = wizard.querySelector('textarea[name="travelerNotes"]')?.value || '';
+
+        const row = (label, value) => `<div class="review-item"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(value)}</span></div>`;
+        reviewSummary.innerHTML = `
+            <div class="review-grid">
+                ${row('Destination', state.destinationName)}
+                ${row('Travel date', state.travelDate)}
+                ${row('Travelers', `${state.travelerType} (${state.travelerCount})`)}
+                ${row('Stay', state.selectedAccommodation)}
+                ${row('Transport', state.selectedTransportation)}
+                ${row('Activities', state.selectedActivities.length > 0 ? state.selectedActivities.join(', ') : 'None selected')}
+                ${row('Notes', state.travelerNotes || 'No specific requests.')}
+                <div class="review-total"><strong>Final price: PHP ${state.totalPrice.toLocaleString()}</strong></div>
+            </div>
+        `;
+    };
+
+    const handlePayment = (method) => {
+        if (paymentSim) paymentSim.hidden = false;
+        
+        state.paymentMethod = method;
+        renderReview();
+
+        // Send to server
+        fetch('/Booking/ConfirmBooking', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': antiForgeryToken
+            },
+            body: JSON.stringify(state)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                if (confIdDisplay) confIdDisplay.textContent = data.bookingId.substring(0, 8).toUpperCase();
+                renderQr(data.qrCode || data.bookingId);
+                setTimeout(() => setStep('success'), 1500);
             }
-
-            if (note) {
-                note.textContent = 'Swapped. AI found a quieter gem with a similar comfort profile.';
+        })
+        .catch(() => {
+            if (paymentSim) {
+                paymentSim.innerHTML = '<p>Payment could not be completed. Please try again.</p>';
             }
         });
+    };
+
+    const escapeHtml = (value) => String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+
+    const renderQr = (code) => {
+        const target = wizard.querySelector('[data-qr-code-placeholder]');
+
+        if (!target) {
+            return;
+        }
+
+        const bits = String(code || 'SUGBOGO').padEnd(25, '0').slice(0, 25);
+        target.innerHTML = bits.split('').map((char, index) => {
+            const filled = ((char.charCodeAt(0) + index) % 3) !== 0;
+            return `<i class="${filled ? 'is-filled' : ''}"></i>`;
+        }).join('');
+    };
+
+    // Events
+    wizard.querySelectorAll('[data-goto-step]').forEach(btn => {
+        btn.addEventListener('click', () => setStep(btn.dataset.gotoStep));
     });
 
-    payButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-            button.textContent = 'Authorizing...';
-            window.setTimeout(() => setStage('success'), 520);
-        });
+    wizard.querySelectorAll('input, select').forEach(input => {
+        input.addEventListener('change', updatePricing);
     });
 
-    checkoutForm?.addEventListener('submit', (event) => {
-        event.preventDefault();
-        setStage('success');
+    wizard.querySelectorAll('[data-pay-method]').forEach(btn => {
+        btn.addEventListener('click', () => handlePayment(btn.dataset.payMethod));
     });
+
+    updatePricing();
 };
 
 const initAccountFlow = () => {

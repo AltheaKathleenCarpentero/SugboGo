@@ -17,6 +17,8 @@ public sealed class SugboGoDbContext : DbContext
     public DbSet<AdminGem> AdminGems => Set<AdminGem>();
     public DbSet<ItineraryTemplate> ItineraryTemplates => Set<ItineraryTemplate>();
     public DbSet<AdminPartner> AdminPartners => Set<AdminPartner>();
+    public DbSet<Booking> Bookings => Set<Booking>();
+    public DbSet<TravelSpot> TravelSpots => Set<TravelSpot>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -55,5 +57,14 @@ public sealed class SugboGoDbContext : DbContext
         modelBuilder.Entity<AdminGem>().HasKey(e => e.Id);
         modelBuilder.Entity<ItineraryTemplate>().HasKey(e => e.Id);
         modelBuilder.Entity<AdminPartner>().HasKey(e => e.Id);
+
+        modelBuilder.Entity<TravelSpot>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.HasIndex(e => e.Name).IsUnique();
+            entity.HasIndex(e => e.Category);
+            entity.HasIndex(e => e.Region);
+        });
     }
 }

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SugboGo.Data;
@@ -12,9 +13,11 @@ using SugboGo.Data;
 namespace SugboGo.Data.Migrations
 {
     [DbContext(typeof(SugboGoDbContext))]
-    partial class SugboGoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260507210002_AddBookingsTable")]
+    partial class AddBookingsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -336,51 +339,6 @@ namespace SugboGo.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("TravelPreferences");
-                });
-
-            modelBuilder.Entity("SugboGo.Models.TravelSpot", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(80)
-                        .HasColumnType("character varying(80)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(600)
-                        .HasColumnType("character varying(600)");
-
-                    b.Property<bool>("IsPopular")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Location")
-                        .IsRequired()
-                        .HasMaxLength(160)
-                        .HasColumnType("character varying(160)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(160)
-                        .HasColumnType("character varying(160)");
-
-                    b.Property<string>("Region")
-                        .IsRequired()
-                        .HasMaxLength(80)
-                        .HasColumnType("character varying(80)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Category");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.HasIndex("Region");
-
-                    b.ToTable("TravelSpots");
                 });
 
             modelBuilder.Entity("SugboGo.Models.UserAccount", b =>

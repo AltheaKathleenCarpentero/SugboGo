@@ -1,7 +1,9 @@
 using SugboGo.Models;
+using SugboGo.Data;
 using SugboGo.Services.Auth;
 using SugboGo.Services.Dashboard;
 using SugboGo.Services.Travel;
+using Microsoft.EntityFrameworkCore;
 
 namespace SugboGo.Services.Admin;
 
@@ -11,17 +13,20 @@ public sealed class AdminOperationsService : IAdminOperationsService
     private readonly ITravelPreferenceStore _preferenceStore;
     private readonly IDestinationPostStore _postStore;
     private readonly IAdminDataStore _adminDataStore;
+    private readonly SugboGoDbContext _dbContext;
 
     public AdminOperationsService(
         IUserAccountStore userStore,
         ITravelPreferenceStore preferenceStore,
         IDestinationPostStore postStore,
-        IAdminDataStore adminDataStore)
+        IAdminDataStore adminDataStore,
+        SugboGoDbContext dbContext)
     {
         _userStore = userStore;
         _preferenceStore = preferenceStore;
         _postStore = postStore;
         _adminDataStore = adminDataStore;
+        _dbContext = dbContext;
     }
 
     public async Task<AdminDashboardViewModel> BuildDashboardAsync(CancellationToken cancellationToken = default)
@@ -32,11 +37,12 @@ public sealed class AdminOperationsService : IAdminOperationsService
         var gems = await _adminDataStore.GetGemsAsync(cancellationToken);
         var templates = await _adminDataStore.GetTemplatesAsync(cancellationToken);
         var partners = await _adminDataStore.GetPartnersAsync(cancellationToken);
+        var bookings = await GetBookingsAsync(cancellationToken);
         var latestUser = users.OrderByDescending(user => user.CreatedAt).FirstOrDefault();
 
         return new AdminDashboardViewModel
         {
-            Kpis = BuildKpis(users, preferences, posts, latestUser),
+            Kpis = BuildKpis(users, preferences, posts, bookings, latestUser),
             VibeTrends = BuildVibeTrends(preferences),
             UrgentAlerts = BuildUrgentAlerts(users, preferences),
             Gems = gems.Select(g => new GemAdminViewModel
@@ -59,7 +65,7 @@ public sealed class AdminOperationsService : IAdminOperationsService
                 Stops = t.Stops,
                 AvgDuration = t.AvgDuration
             }).ToList(),
-            Pipeline = BuildPipeline(),
+            Pipeline = BuildPipeline(bookings, users, preferences),
             Flashpackers = BuildFlashpackers(users, preferences, posts),
             Partners = partners.Select(p => new PartnerAdminViewModel
             {
@@ -70,6 +76,15 @@ public sealed class AdminOperationsService : IAdminOperationsService
                 LastAudit = p.LastAudit,
                 Status = p.Status
             }).ToList(),
+            Bookings = bookings.Select(b => new BookingAdminViewModel
+            {
+                Id = b.Id,
+                UserName = users.FirstOrDefault(u => u.Id == b.UserId)?.FullName ?? "Unknown User",
+                Destination = b.DestinationName,
+                Date = b.TravelDate.ToString("MMM d, yyyy"),
+                Status = b.Status,
+                Amount = b.TotalPrice
+            }).ToList(),
             CollaborationQueue = BuildCollaborationQueue()
         };
     }
@@ -78,12 +93,15 @@ public sealed class AdminOperationsService : IAdminOperationsService
         IReadOnlyCollection<UserAccount> users,
         IReadOnlyCollection<TravelPreferenceRecord> preferences,
         IReadOnlyCollection<DestinationPost> posts,
+        IReadOnlyCollection<Booking> bookings,
         UserAccount? latestUser)
     {
+        var bookingRevenue = bookings.Sum(booking => booking.TotalPrice);
+
         return
         [
             new() { Label = "Total Users", Value = users.Count.ToString(), Delta = $"{users.Count(user => AccountRoles.Normalize(user.Role) == AccountRoles.Client)} client account(s)" },
-            new() { Label = "Total Posts", Value = posts.Count.ToString(), Delta = $"{posts.Sum(post => post.Likes)} community like(s)" },
+            new() { Label = "Live Bookings", Value = bookings.Count.ToString(), Delta = $"PHP {bookingRevenue:N0} confirmed revenue" },
             new() { Label = "Preferences Submitted", Value = preferences.Count.ToString(), Delta = $"{preferences.Select(preference => preference.UserId).Distinct().Count()} traveler profile(s)" },
             new() { Label = "Latest Signup", Value = latestUser?.CreatedAt.ToLocalTime().ToString("MMM d") ?? "None", Delta = latestUser?.Email ?? "No registered users yet" }
         ];
@@ -173,60 +191,53 @@ public sealed class AdminOperationsService : IAdminOperationsService
             : profiles;
     }
 
-    private static List<PipelineColumnViewModel> BuildPipeline()
+    private static List<PipelineColumnViewModel> BuildPipeline(
+        IReadOnlyCollection<Booking> bookings,
+        IReadOnlyCollection<UserAccount> users,
+        IReadOnlyCollection<TravelPreferenceRecord> preferences)
     {
-        return
-        [
-            new()
+        var userById = users.ToDictionary(user => user.Id, user => user);
+        var preferenceByUser = preferences
+            .GroupBy(preference => preference.UserId)
+            .ToDictionary(group => group.Key, group => group.OrderByDescending(preference => preference.UpdatedAt).First());
+
+        var columns = new[]
+        {
+            "New Requests",
+            "In Curation",
+            "Awaiting User Approval",
+            "Confirmed/Paid",
+            "In Progress",
+            "Completed"
+        }.Select(name => new PipelineColumnViewModel { Name = name }).ToList();
+
+        foreach (var booking in bookings.OrderByDescending(booking => booking.CreatedAt))
+        {
+            userById.TryGetValue(booking.UserId, out var user);
+            preferenceByUser.TryGetValue(booking.UserId, out var preference);
+
+            var status = booking.Status.Trim().ToLowerInvariant();
+            var column = status switch
             {
-                Name = "New Requests",
-                Cards =
-                [
-                    new() { Traveler = "Maya Klein", Vibe = "Urban Explorer", TravelWindow = "May 14 to 16", Priority = "High" },
-                    new() { Traveler = "Noah Reyes", Vibe = "Soft Adventure", TravelWindow = "May 18 to 20", Priority = "Normal" }
-                ]
-            },
-            new()
+                "pending" => columns[0],
+                "curating" => columns[1],
+                "awaiting approval" => columns[2],
+                "confirmed" or "paid" => columns[3],
+                "in progress" => columns[4],
+                "completed" => columns[5],
+                _ => columns[0]
+            };
+
+            column.Cards.Add(new PipelineCardViewModel
             {
-                Name = "In Curation",
-                Cards =
-                [
-                    new() { Traveler = "Jon Reed", Vibe = "Island Minimalist", TravelWindow = "May 10 to 12", Priority = "Weather watch" }
-                ]
-            },
-            new()
-            {
-                Name = "Awaiting User Approval",
-                Cards =
-                [
-                    new() { Traveler = "Lea Tan", Vibe = "Heritage Hunter", TravelWindow = "May 11 to 13", Priority = "Dietary note" }
-                ]
-            },
-            new()
-            {
-                Name = "Confirmed/Paid",
-                Cards =
-                [
-                    new() { Traveler = "Priya Shah", Vibe = "Heritage Hunter", TravelWindow = "May 9 to 11", Priority = "Paid" }
-                ]
-            },
-            new()
-            {
-                Name = "In Progress",
-                Cards =
-                [
-                    new() { Traveler = "Mika Santos", Vibe = "Urban Explorer", TravelWindow = "Now", Priority = "Transport alert" }
-                ]
-            },
-            new()
-            {
-                Name = "Completed",
-                Cards =
-                [
-                    new() { Traveler = "Andre Costa", Vibe = "Island Minimalist", TravelWindow = "May 1 to 3", Priority = "Feedback due" }
-                ]
-            }
-        ];
+                Traveler = user?.FullName ?? user?.Email ?? "Traveler",
+                Vibe = preference?.Interests.Select(BuildInterestLabel).FirstOrDefault() ?? booking.TravelerType,
+                TravelWindow = $"{booking.TravelDate:MMM d, yyyy} - {booking.DestinationName}",
+                Priority = $"{booking.PaymentMethod ?? "Payment"} · PHP {booking.TotalPrice:N0}"
+            });
+        }
+
+        return columns;
     }
 
     private static List<PartnerAdminViewModel> BuildPartners()
@@ -237,6 +248,36 @@ public sealed class AdminOperationsService : IAdminOperationsService
             new() { Name = "South Ridge Guides", Type = "Local guide", Contact = "Ramon Uy", Commission = "Per route", LastAudit = "Apr 22, 2026", Status = "Watch weather" },
             new() { Name = "Red Door Supper Club", Type = "Dining", Contact = "Marco Dizon", Commission = "12%", LastAudit = "May 3, 2026", Status = "Excellent" }
         ];
+    }
+
+    private async Task<List<Booking>> GetBookingsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _dbContext.Bookings
+                .OrderByDescending(booking => booking.CreatedAt)
+                .ToListAsync(cancellationToken);
+        }
+        catch (Exception exception) when (IsMissingBookingsSchema(exception))
+        {
+            return [];
+        }
+    }
+
+    private static bool IsMissingBookingsSchema(Exception exception)
+    {
+        for (var current = exception; current is not null; current = current.InnerException!)
+        {
+            if (current.Message.Contains("Bookings", StringComparison.OrdinalIgnoreCase) ||
+                current.Message.Contains("bookings", StringComparison.OrdinalIgnoreCase) ||
+                current.Message.Contains("column", StringComparison.OrdinalIgnoreCase) ||
+                current.Message.Contains("relation", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static List<CollaborationSuggestionViewModel> BuildCollaborationQueue()
