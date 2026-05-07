@@ -8,6 +8,70 @@
    ============================================================ */
 
 /* ── CSS Variables ─────────────────────────────────────────── */
+
+/* ── Button: primary → teal ─────────────────────────────────── */
+.sg-btn--primary {
+    background-color: var(--color-teal-dark);
+    color: var(--color-white);
+}
+
+    .sg-btn--primary:hover {
+        background-color: var(--color-teal-dark);
+        box-shadow: 0 6px 20px rgba(31,110,110,0.35);
+    }
+
+/* ── Dropdown nav ───────────────────────────────────────────── */
+.sg-nav__dropdown {
+    position: relative;
+}
+
+.sg-nav__dropdown-toggle {
+    background: none;
+    border: none;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-ink);
+    cursor: pointer;
+    padding: 0;
+    letter-spacing: 0.01em;
+}
+
+    .sg-nav__dropdown-toggle:hover {
+        color: var(--color-teal);
+    }
+
+.sg-nav__dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 0;
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(26,26,24,0.1);
+    min-width: 180px;
+    padding: 8px 0;
+    z-index: 100;
+}
+
+    .sg-nav__dropdown-menu a {
+        display: block;
+        padding: 10px 20px;
+        color: var(--color-ink);
+        font-size: 0.875rem;
+        transition: background 0.15s;
+    }
+
+        .sg-nav__dropdown-menu a:hover {
+            background: var(--color-beige);
+            color: var(--color-teal);
+        }
+
+.sg-nav__dropdown:hover .sg-nav__dropdown-menu {
+    display: block;
+}
+
 :root {
     --color-white: #FFFFFF;
     --color-off-white: #FDFCFA;
@@ -226,7 +290,7 @@ button {
 }
 
 .sg-btn--primary {
-    background-color: var(--color-terracotta);
+    background-color: var(--color-teal);
     color: var(--color-white);
 }
 
@@ -259,7 +323,7 @@ button {
     }
 
 .sg-btn--ghost {
-    color: var(--color-terracotta);
+    color: var(--color-teal);
     padding: 0;
     border-radius: 0;
     font-weight: 500;
@@ -310,14 +374,14 @@ button {
     font-family: var(--font-display);
     font-size: 1.5rem;
     font-weight: 600;
-    color: var(--color-terracotta); 
+    color: var(--color-teal);
     letter-spacing: -0.02em;
     flex-shrink: 0;
 }
 
 
     .sg-nav__logo span {
-        color: var(--color-terracotta);
+        color: var(--color-teal);
     }
 
 .sg-nav__links {
@@ -341,12 +405,12 @@ button {
             left: 0;
             width: 0;
             height: 1.5px;
-            background-color: var(--color-terracotta);
+            background-color: var(--color-teal);
             transition: width var(--transition);
         }
 
         .sg-nav__links a:hover {
-            color: var(--color-terracotta);
+            color: var(--color-teal );
         }
 
             .sg-nav__links a:hover::after {
@@ -354,7 +418,7 @@ button {
             }
 
         .sg-nav__links a.active {
-            color: var(--color-terracotta); 
+            color: var(--color-teal); 
         }
 
             .sg-nav__links a.active::after {
@@ -394,7 +458,7 @@ button {
 .sg-hero__eyebrow-line {
     width: 32px;
     height: 1.5px;
-    background-color: var(--color-terracotta);
+    background-color: var(--color-teal);
 }
 
 .sg-hero__title {
@@ -403,7 +467,7 @@ button {
 
     .sg-hero__title em {
         font-style: italic;
-        color: var(--color-terracotta);
+        color: var(--color-teal);
     }
 
 .sg-hero__subtitle {
@@ -513,7 +577,7 @@ button {
     font-family: var(--font-display);
     font-size: 2.5rem;
     font-weight: 300;
-    color: var(--color-terracotta);
+    color: var(--color-teal);
     line-height: 1;
     margin-bottom: 4px;
 }
@@ -673,7 +737,7 @@ button {
     font-weight: 600;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--color-terracotta);
+    color: var(--color-teal);
     margin-bottom: 8px;
 }
 
@@ -961,7 +1025,7 @@ button {
 }
 
     .sg-feature-item:hover {
-        border-color: var(--color-terracotta);
+        border-color: var(--color-teal);
         box-shadow: 0 4px 24px rgba(196,97,74,0.08);
     }
 
@@ -1012,7 +1076,7 @@ button {
 }
 
     .sg-newsletter__inner .sg-label {
-        color: var(--color-terracotta);
+        color: var(--color-teal);
         margin-bottom: 16px;
     }
 
@@ -1140,13 +1204,13 @@ button {
 }
 
     .sg-footer__social-link:hover {
-        border-color: var(--color-terracotta);
-        color: var(--color-terracotta);
+        border-color: var(--color-teal);
+        color: var(--color-teal);
     }
 
 /* ── Utility Classes ────────────────────────────────────────── */
 .sg-text-terra {
-    color: var(--color-terracotta);
+    color: var(--color-teal);
 }
 
 .sg-text-teal {
