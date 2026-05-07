@@ -4244,3 +4244,287 @@ button {
         justify-items: start;
     }
 }
+
+/* ============================================================
+   Preference Survey and AI Recommendations
+   ============================================================ */
+.preference-flow,
+.recommendation-flow {
+    min-height: calc(100vh - 68px);
+    background: oklch(0.965 0.014 205);
+    color: var(--lp-ink);
+    padding: clamp(28px, 5vw, 56px) 0 clamp(56px, 8vw, 96px);
+}
+
+.preference-shell,
+.recommendation-shell {
+    width: min(100% - 32px, 1160px);
+    margin: 0 auto;
+}
+
+.preference-hero,
+.recommendation-hero {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: clamp(24px, 5vw, 44px);
+}
+
+.preference-hero {
+    display: block;
+    max-width: 780px;
+}
+
+.preference-hero h1,
+.recommendation-hero h1,
+.ai-explainer h2 {
+    margin: 0;
+    color: var(--lp-ink);
+    font-family: var(--lp-font-head);
+    font-size: clamp(2.3rem, 6vw, 5rem);
+    font-weight: 900;
+    line-height: 1.02;
+    letter-spacing: 0;
+}
+
+.preference-hero p:not(.lp-kicker),
+.recommendation-hero p,
+.ai-explainer p,
+.tech-stack p {
+    color: var(--lp-muted);
+    line-height: 1.7;
+}
+
+.preference-form,
+.ai-explainer {
+    display: grid;
+    gap: 18px;
+}
+
+.preference-section,
+.ai-explainer,
+.tech-stack {
+    border: 1px solid var(--lp-line);
+    border-radius: 8px;
+    background: oklch(0.998 0.006 94);
+    box-shadow: 0 2px 14px rgba(30, 58, 138, 0.05);
+    padding: clamp(20px, 4vw, 32px);
+}
+
+.preference-section h2,
+.ai-explainer h3,
+.tech-stack h3 {
+    margin: 0;
+    color: var(--lp-ink);
+    font-family: var(--lp-font-head);
+    font-weight: 900;
+    line-height: 1.15;
+}
+
+.preference-section h2 {
+    font-size: clamp(1.6rem, 3vw, 2.6rem);
+}
+
+.interest-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 22px;
+}
+
+.interest-option {
+    display: grid;
+    min-height: 150px;
+    align-content: start;
+    border: 1px solid var(--lp-line);
+    border-radius: 8px;
+    background: oklch(0.985 0.008 205);
+    padding: 16px;
+    transition: border-color 240ms var(--lp-ease), background-color 240ms var(--lp-ease), transform 240ms var(--lp-ease);
+}
+
+.interest-option:hover,
+.interest-option:has(input:checked) {
+    border-color: var(--lp-teal);
+    background: color-mix(in oklch, var(--lp-teal), white 88%);
+    transform: translateY(-2px);
+}
+
+.interest-option input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--lp-teal);
+}
+
+.interest-option span,
+.preference-field {
+    display: grid;
+    gap: 8px;
+}
+
+.interest-option strong,
+.preference-field span,
+.recommendation-card strong {
+    color: var(--lp-ink);
+    font-family: var(--lp-font-head);
+    font-weight: 900;
+}
+
+.interest-option small,
+.preference-field small {
+    color: var(--lp-muted);
+    line-height: 1.55;
+}
+
+.preference-section--split {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.preference-field--wide {
+    grid-column: 1 / -1;
+}
+
+.preference-field input,
+.preference-field select,
+.preference-field textarea {
+    width: 100%;
+    border: 1px solid var(--lp-line);
+    border-radius: 6px;
+    background: oklch(0.99 0.006 94);
+    color: var(--lp-ink);
+    padding: 12px 14px;
+}
+
+.preference-field textarea {
+    resize: vertical;
+}
+
+.preference-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+}
+
+.recommendation-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: clamp(28px, 5vw, 44px);
+}
+
+.recommendation-card {
+    overflow: hidden;
+    border: 1px solid var(--lp-line);
+    border-radius: 8px;
+    background: oklch(0.998 0.006 94);
+    box-shadow: 0 2px 14px rgba(30, 58, 138, 0.05);
+}
+
+.recommendation-card img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+}
+
+.recommendation-card__body {
+    display: grid;
+    gap: 12px;
+    padding: 20px;
+}
+
+.recommendation-card__body h2 {
+    margin: 0;
+    color: var(--lp-ink);
+    font-family: var(--lp-font-head);
+    font-size: clamp(1.35rem, 2.4vw, 2rem);
+    font-weight: 900;
+    line-height: 1.08;
+}
+
+.recommendation-card__body p {
+    margin: 0;
+    color: var(--lp-muted);
+    line-height: 1.6;
+}
+
+.recommendation-card__score,
+.recommendation-tags,
+.ai-explainer__grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.recommendation-card__score {
+    justify-content: space-between;
+}
+
+.recommendation-card__score span,
+.recommendation-tags span {
+    border-radius: 999px;
+    background: color-mix(in oklch, var(--lp-teal), white 86%);
+    color: var(--lp-blue);
+    font-family: var(--lp-font-head);
+    font-size: 0.78rem;
+    font-weight: 900;
+    padding: 5px 10px;
+}
+
+.recommendation-card__score small {
+    color: var(--lp-muted);
+}
+
+.ai-explainer__head {
+    max-width: 760px;
+}
+
+.ai-explainer h2 {
+    font-size: clamp(1.8rem, 4vw, 3.2rem);
+}
+
+.ai-explainer__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.ai-explainer__grid article {
+    border-top: 1px solid var(--lp-line);
+    padding-top: 16px;
+}
+
+.tech-stack {
+    background: oklch(0.985 0.008 205);
+}
+
+@media (max-width: 980px) {
+    .interest-grid,
+    .ai-explainer__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .preference-section--split,
+    .recommendation-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .preference-hero,
+    .recommendation-hero {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .interest-grid,
+    .ai-explainer__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .interest-option {
+        min-height: 0;
+    }
+}

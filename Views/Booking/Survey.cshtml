@@ -1,0 +1,86 @@
+@model TravelPreferenceSurveyViewModel
+
+@{
+    ViewData["Title"] = "Cebu Preference Survey";
+    var paceOptions = new[] { "Relaxed", "Balanced", "Packed" };
+    var budgetOptions = new[] { "Budget-friendly", "Mid-range", "Premium" };
+}
+
+<section class="preference-flow">
+    <div class="preference-shell">
+        <header class="preference-hero lp-reveal">
+            <p class="lp-kicker">Step 2 of 3</p>
+            <h1>Tell us what Cebu should feel like.</h1>
+            <p>Your answers are saved to your secure traveler profile, then used to rank Cebu destinations around your interests.</p>
+        </header>
+
+        <form class="preference-form lp-reveal" asp-controller="Booking" asp-action="Survey" method="post">
+            @Html.AntiForgeryToken()
+
+            <section class="preference-section" aria-labelledby="interests-title">
+                <div>
+                    <p class="lp-kicker">Travel interests</p>
+                    <h2 id="interests-title">Choose every Cebu vibe that fits.</h2>
+                    <span class="auth-validation" asp-validation-for="SelectedInterests"></span>
+                </div>
+
+                <div class="interest-grid">
+                    @foreach (var option in Model.InterestOptions)
+                    {
+                        var isChecked = Model.SelectedInterests.Contains(option.Key);
+                        <label class="interest-option">
+                            <input type="checkbox" name="SelectedInterests" value="@option.Key" checked="@isChecked" />
+                            <span>
+                                <strong>@option.Label</strong>
+                                <small>@option.Description</small>
+                            </span>
+                        </label>
+                    }
+                </div>
+            </section>
+
+            <section class="preference-section preference-section--split" aria-label="Trip style">
+                <label class="preference-field">
+                    <span>Adventure level</span>
+                    <input asp-for="AdventureLevel" type="range" min="1" max="5" />
+                    <small>1 is easygoing, 5 is high-energy.</small>
+                </label>
+
+                <label class="preference-field">
+                    <span>Travel pace</span>
+                    <select asp-for="TravelPace">
+                        @foreach (var pace in paceOptions)
+                        {
+                            <option value="@pace">@pace</option>
+                        }
+                    </select>
+                </label>
+
+                <label class="preference-field">
+                    <span>Budget range</span>
+                    <select asp-for="BudgetRange">
+                        @foreach (var budget in budgetOptions)
+                        {
+                            <option value="@budget">@budget</option>
+                        }
+                    </select>
+                </label>
+
+                <label class="preference-field preference-field--wide">
+                    <span>Anything to avoid or prioritize?</span>
+                    <textarea asp-for="Notes" rows="4" placeholder="Example: seafood is great, avoid very long drives, prefer sunrise over late nights"></textarea>
+                    <span class="auth-validation" asp-validation-for="Notes"></span>
+                </label>
+            </section>
+
+            <div class="preference-actions">
+                <button class="booking-primary" type="submit">Generate Cebu recommendations</button>
+                <a class="booking-link-btn" asp-controller="Home" asp-action="Index">Not now</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
