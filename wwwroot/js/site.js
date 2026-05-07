@@ -824,8 +824,23 @@ const initAdminDashboard = () => {
     });
 };
 
+const initSessionGuard = () => {
+    const isAuthenticated = document.body.dataset.authenticated === 'true';
+
+    if (!isAuthenticated) {
+        sessionStorage.removeItem('sg_session_active');
+        return;
+    }
+
+    // Mark this tab's session as active so authenticated pages load normally.
+    // Previously this flag was set AFTER a logout check, which meant every
+    // fresh sign-in was immediately logged out before the dashboard loaded.
+    sessionStorage.setItem('sg_session_active', 'true');
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.classList.add('sg-motion-ready');
+    initSessionGuard();
     initMountainRange();
     initDestinationCinema();
     initLandingPage();

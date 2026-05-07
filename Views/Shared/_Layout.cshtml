@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="~/css/sugbogo.css" asp-append-version="true" />
 </head>
 
-<body>
+<body data-authenticated="@User.Identity?.IsAuthenticated.ToString().ToLowerInvariant()">
     <!-- ================================================== -->
     <!-- SG-NAV: Modern navbar from sugbogo.css              -->
     <!-- ================================================== -->
