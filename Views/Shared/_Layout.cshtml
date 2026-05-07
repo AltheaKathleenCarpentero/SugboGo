@@ -3,10 +3,10 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - SogboGo</title>
+    <title>@ViewData["Title"] - SugboGo</title>
     
-    <meta name="description" content="SogboGo curates hidden gems, authentic local spots, tailored Cebu itineraries, and partner developer earning opportunities." />
-    <meta property="og:title" content="SogboGo: Explore Cebu, Curated" />
+    <meta name="description" content="SugboGo curates hidden gems, authentic local spots, tailored Cebu itineraries, and partner developer earning opportunities." />
+    <meta property="og:title" content="SugboGo: Explore Cebu, Curated" />
     <meta property="og:description" content="Where flashpackers discover hidden gems, vetted local partners, and one-click Cebu itineraries." />
     
     <!-- Google Fonts: existing Cebu pages use Cormorant + DM Sans; landing page adds Poppins + Libre Baskerville -->
@@ -22,26 +22,30 @@
     <!-- ================================================== -->
     <header class="sg-nav">
         <div class="sg-container sg-nav__inner">
-            <a href="/" class="sg-nav__logo">Sogbo<span>Go</span></a>
+            <a href="/" class="sg-nav__logo">Sugbo<span>Go</span></a>
             <nav class="sg-nav__links">
-                <a href="/#why">Why SogboGo</a>
-                <a href="/#bookings">Bookings</a>
-                <a href="/#how">How It Works</a>
-                <a href="/#experiences">Experiences</a>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <a href="/Dashboard">Dashboard</a>
-                    @if (User.IsInRole("Admin"))
-                    {
-                        <a href="/Admin">Admin</a>
-                    }
+                    <a href="/Dashboard">Home</a>
                 }
-                <a href="/#partners">For Developers</a>
+                <a href="/Booking">Booking</a>
+                <a href="/#experiences">Experiences</a>
+                <div class="sg-nav__dropdown">
+                    <button class="sg-nav__dropdown-toggle" type="button">How It Works ▾</button>
+                    <div class="sg-nav__dropdown-menu">
+                        <a href="/#why">Why SugboGo</a>
+                        <a href="/#partners">For Developers</a>
+                    </div>
+                </div>
+                @if (User.IsInRole("Admin"))
+                {
+                    <a href="/Admin">Admin</a>
+                }
             </nav>
             <div class="sg-nav__actions">
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <span class="sg-nav__user">Hi, @User.Identity.Name</span>
+                    <span class="sg-nav__user">Hi, @User.Identity.Name.Split(' ')[0]</span>
                     <form asp-controller="Account" asp-action="Logout" method="post" class="sg-nav__logout">
                         @Html.AntiForgeryToken()
                         <button class="sg-btn sg-btn--outline sg-btn--sm" type="submit">Sign out</button>
@@ -68,7 +72,7 @@
         <div class="sg-container">
             <div class="sg-footer__inner">
                 <div class="sg-footer__brand">
-                    <a href="/" class="sg-nav__logo">Sogbo<span>Go</span></a>
+                    <a href="/" class="sg-nav__logo">Sugbo<span>Go</span></a>
                     <p class="sg-footer__tagline">Where Flashpackers Discover Hidden Gems</p>
                 </div>
                 <div class="sg-footer__col">
@@ -90,7 +94,7 @@
                 <div class="sg-footer__col">
                     <div class="sg-footer__col-title">Stay Updated</div>
                     <ul class="sg-footer__links">
-                        <li><a href="mailto:hello@sogbogo.com">hello@sogbogo.com</a></li>
+                        <li><a href="mailto:hello@sugbogo.com">hello@sugbogo.com</a></li>
                         <li><a href="/#faq">FAQ</a></li>
                         <li><a href="/Privacy">Privacy Policy</a></li>
                     </ul>
