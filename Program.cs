@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.DataProtection;
 using SugboGo.Services.Admin;
 using SugboGo.Services.Auth;
 using SugboGo.Services.Dashboard;
+using SugboGo.Services.Travel;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
@@ -24,6 +25,12 @@ builder.Services.AddScoped<PostgresUserAccountStore>();
 builder.Services.AddHttpClient<SupabaseUserAccountStore>();
 builder.Services.AddScoped<UserAccountStoreFactory>();
 builder.Services.AddScoped<IUserAccountStore>(provider => provider.GetRequiredService<UserAccountStoreFactory>().Create());
+builder.Services.AddScoped<LocalJsonTravelPreferenceStore>();
+builder.Services.AddScoped<PostgresTravelPreferenceStore>();
+builder.Services.AddHttpClient<SupabaseTravelPreferenceStore>();
+builder.Services.AddScoped<TravelPreferenceStoreFactory>();
+builder.Services.AddScoped<ITravelPreferenceStore>(provider => provider.GetRequiredService<TravelPreferenceStoreFactory>().Create());
+builder.Services.AddSingleton<ICebuRecommendationService, CebuRecommendationService>();
 builder.Services.AddScoped<IAdminOperationsService, AdminOperationsService>();
 builder.Services.AddScoped<IDashboardExperienceService, DashboardExperienceService>();
 builder.Services

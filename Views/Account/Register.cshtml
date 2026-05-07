@@ -6,7 +6,7 @@
 
 <section class="auth-page">
     <div class="auth-panel lp-reveal">
-        <a class="auth-back" asp-controller="Account" asp-action="Index">Back</a>
+        <a class="auth-back" asp-controller="Account" asp-action="Index" asp-route-returnUrl="@Model.ReturnUrl">Back</a>
         <div class="auth-brand">Sugbo<span>Go</span></div>
         <h1>Create your account</h1>
         <p class="auth-subtitle">Use this email for your Cebu passes, host updates, and booking receipts.</p>
@@ -18,8 +18,9 @@
 
         <form class="auth-form" asp-controller="Account" asp-action="Register" method="post">
             @Html.AntiForgeryToken()
+            <input asp-for="ReturnUrl" type="hidden" />
 
-            <label asp-for="Email">Email address</label>
+            <label asp-for="Email">Gmail address</label>
             <input asp-for="Email" type="email" autocomplete="email" readonly />
             <span class="auth-validation" asp-validation-for="Email"></span>
 

@@ -12,6 +12,7 @@ public sealed class SupabaseOptions
     public string Url { get; set; } = string.Empty;
     public string ServiceRoleKey { get; set; } = string.Empty;
     public string UsersTable { get; set; } = "sogbogo_users";
+    public string PreferencesTable { get; set; } = "sogbogo_travel_preferences";
 }
 
 public sealed class SupabaseUserAccountStore : IUserAccountStore

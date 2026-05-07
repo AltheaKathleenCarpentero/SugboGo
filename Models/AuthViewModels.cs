@@ -8,6 +8,8 @@ public sealed class EmailEntryViewModel
     [EmailAddress]
     [Display(Name = "Email address")]
     public string Email { get; set; } = string.Empty;
+
+    public string? ReturnUrl { get; set; }
 }
 
 public sealed class SignInViewModel
@@ -19,6 +21,8 @@ public sealed class SignInViewModel
     [Required]
     [DataType(DataType.Password)]
     public string Password { get; set; } = string.Empty;
+
+    public string? ReturnUrl { get; set; }
 
     public string? ErrorMessage { get; set; }
 }
@@ -38,6 +42,8 @@ public sealed class RegisterViewModel
     [StringLength(100, MinimumLength = 8)]
     [DataType(DataType.Password)]
     public string Password { get; set; } = string.Empty;
+
+    public string? ReturnUrl { get; set; }
 
     public string? ErrorMessage { get; set; }
 }

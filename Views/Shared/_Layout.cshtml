@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -23,30 +23,43 @@
     <header class="sg-nav">
         <div class="sg-container sg-nav__inner">
             <a href="/" class="sg-nav__logo">Sugbo<span>Go</span></a>
-            <nav class="sg-nav__links">
-                @if (User.Identity?.IsAuthenticated == true)
-                {
-                    <a href="/Dashboard">Home</a>
-                }
-                <a href="/Booking">Booking</a>
-                <a href="/#experiences">Experiences</a>
-                <div class="sg-nav__dropdown">
-                    <button class="sg-nav__dropdown-toggle" type="button">How It Works ▾</button>
-                    <div class="sg-nav__dropdown-menu">
-                        <a href="/#why">Why SugboGo</a>
-                        <a href="/#partners">For Developers</a>
+            
+            @if (User.IsInRole("Admin"))
+            {
+                <nav class="sg-nav__links">
+                    <a href="/Admin">Admin Dashboard</a>
+                    <a href="/Admin/Users">Manage Users</a>
+                    <a href="/Admin/Bookings">All Bookings</a>
+                </nav>
+            }
+            else if (User.Identity?.IsAuthenticated == true)
+            {
+                <nav class="sg-nav__links">
+                    <a href="/Dashboard">Dashboard</a>
+                    <a href="/Booking/Start">Booking</a>
+                    <a href="/Profile">Profile</a>
+                </nav>
+            }
+            else
+            {
+                <nav class="sg-nav__links">
+                    <a href="/Booking/Start">Booking</a>
+                    <a href="/#experiences">Experiences</a>
+                    <div class="sg-nav__dropdown">
+                        <button class="sg-nav__dropdown-toggle" type="button">How It Works ▾</button>
+                        <div class="sg-nav__dropdown-menu">
+                            <a href="/#why">Why SugboGo</a>
+                            <a href="/#partners">For Developers</a>
+                        </div>
                     </div>
-                </div>
-                @if (User.IsInRole("Admin"))
-                {
-                    <a href="/Admin">Admin</a>
-                }
-            </nav>
+                </nav>
+            }
+
             <div class="sg-nav__actions">
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <span class="sg-nav__user">Hi, @User.Identity.Name.Split(' ')[0]</span>
-                    <form asp-controller="Account" asp-action="Logout" method="post" class="sg-nav__logout">
+                    <span class="sg-nav__user">Hi, @(User.Identity.Name?.Split(' ')[0] ?? "User")</span>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="sg-nav__logout" style="display:inline;">
                         @Html.AntiForgeryToken()
                         <button class="sg-btn sg-btn--outline sg-btn--sm" type="submit">Sign out</button>
                     </form>
@@ -54,8 +67,8 @@
                 else
                 {
                     <a class="sg-btn sg-btn--outline sg-btn--sm" href="/Account">Sign in</a>
+                    <a class="sg-btn sg-btn--primary sg-btn--sm" href="/Booking/Start">Book now</a>
                 }
-                <a class="sg-btn sg-btn--primary sg-btn--sm" href="/Booking">Book now</a>
             </div>
         </div>
     </header>

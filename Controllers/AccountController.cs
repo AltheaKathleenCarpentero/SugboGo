@@ -21,10 +21,10 @@ public sealed class AccountController : Controller
     }
 
     [HttpGet]
-    public IActionResult Index()
+    public IActionResult Index(string? returnUrl = null)
     {
         ViewData["Title"] = "Sign in or create an account";
-        return View(new EmailEntryViewModel());
+        return View(new EmailEntryViewModel { ReturnUrl = returnUrl });
     }
 
     [HttpPost]
@@ -39,18 +39,24 @@ public sealed class AccountController : Controller
         }
 
         var email = NormalizeEmail(model.Email);
+        if (RequiresGmailAccount(model.ReturnUrl) && !email.EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase))
+        {
+            ModelState.AddModelError(nameof(model.Email), "Use your Gmail address to continue with SugboGo booking.");
+            return View("Index", model);
+        }
+
         var existingUser = await _userStore.FindByEmailAsync(email, cancellationToken);
 
         return existingUser is null
-            ? RedirectToAction(nameof(Register), new { email })
-            : RedirectToAction(nameof(SignIn), new { email });
+            ? RedirectToAction(nameof(Register), new { email, model.ReturnUrl })
+            : RedirectToAction(nameof(SignIn), new { email, model.ReturnUrl });
     }
 
     [HttpGet]
-    public IActionResult SignIn(string email)
+    public IActionResult SignIn(string email, string? returnUrl = null)
     {
         ViewData["Title"] = "Enter your password";
-        return View(new SignInViewModel { Email = NormalizeEmail(email) });
+        return View(new SignInViewModel { Email = NormalizeEmail(email), ReturnUrl = returnUrl });
     }
 
     [HttpPost]
@@ -73,14 +79,14 @@ public sealed class AccountController : Controller
         }
 
         await SignUserInAsync(user);
-        return RedirectToRoleHome(user);
+        return RedirectAfterAuthentication(user, model.ReturnUrl);
     }
 
     [HttpGet]
-    public IActionResult Register(string email)
+    public IActionResult Register(string email, string? returnUrl = null)
     {
         ViewData["Title"] = "Create your account";
-        return View(new RegisterViewModel { Email = NormalizeEmail(email) });
+        return View(new RegisterViewModel { Email = NormalizeEmail(email), ReturnUrl = returnUrl });
     }
 
     [HttpPost]
@@ -95,11 +101,17 @@ public sealed class AccountController : Controller
         }
 
         var email = NormalizeEmail(model.Email);
+        if (RequiresGmailAccount(model.ReturnUrl) && !email.EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase))
+        {
+            ModelState.AddModelError(nameof(model.Email), "Use your Gmail address to continue with SugboGo booking.");
+            return View(model);
+        }
+
         var existingUser = await _userStore.FindByEmailAsync(email, cancellationToken);
 
         if (existingUser is not null)
         {
-            return RedirectToAction(nameof(SignIn), new { email });
+            return RedirectToAction(nameof(SignIn), new { email, model.ReturnUrl });
         }
 
         var user = new UserAccount
@@ -121,7 +133,7 @@ public sealed class AccountController : Controller
         }
 
         await SignUserInAsync(user);
-        return RedirectToRoleHome(user);
+        return RedirectAfterAuthentication(user, model.ReturnUrl);
     }
 
     [HttpGet]
@@ -186,6 +198,22 @@ public sealed class AccountController : Controller
         return role == AccountRoles.Admin
             ? RedirectToAction("Index", "Admin")
             : RedirectToAction("Index", "Dashboard");
+    }
+
+    private IActionResult RedirectAfterAuthentication(UserAccount user, string? returnUrl)
+    {
+        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return LocalRedirect(returnUrl);
+        }
+
+        return RedirectToRoleHome(user);
+    }
+
+    private static bool RequiresGmailAccount(string? returnUrl)
+    {
+        return !string.IsNullOrWhiteSpace(returnUrl)
+            && returnUrl.StartsWith("/Booking", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string NormalizeEmail(string email) => (email ?? string.Empty).Trim().ToLowerInvariant();
