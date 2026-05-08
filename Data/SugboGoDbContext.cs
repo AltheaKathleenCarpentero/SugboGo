@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using SugboGo.Models;
 
 namespace SugboGo.Data;
@@ -40,23 +41,27 @@ public sealed class SugboGoDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Email).IsUnique();
-        });
 
-        modelBuilder.Entity<TravelPreferenceRecord>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.HasIndex(e => e.UserId);
-        });
+            entity.HasMany(e => e.Bookings)
+                .WithOne(e => e.User)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<SavedGem>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.HasIndex(e => e.UserId);
-        });
+            entity.HasMany(e => e.SavedGems)
+                .WithOne(e => e.User)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<AdminGem>().HasKey(e => e.Id);
-        modelBuilder.Entity<ItineraryTemplate>().HasKey(e => e.Id);
-        modelBuilder.Entity<AdminPartner>().HasKey(e => e.Id);
+            entity.HasMany(e => e.DestinationPosts)
+                .WithOne(e => e.User)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.TravelPreferences)
+                .WithOne(e => e.User)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         modelBuilder.Entity<TravelSpot>(entity =>
         {
@@ -65,6 +70,56 @@ public sealed class SugboGoDbContext : DbContext
             entity.HasIndex(e => e.Name).IsUnique();
             entity.HasIndex(e => e.Category);
             entity.HasIndex(e => e.Region);
+
+            entity.HasMany(e => e.Bookings)
+                .WithOne(e => e.TravelSpot)
+                .HasForeignKey(e => e.TravelSpotId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasMany(e => e.SavedGems)
+                .WithOne(e => e.TravelSpot)
+                .HasForeignKey(e => e.TravelSpotId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasMany(e => e.DestinationPosts)
+                .WithOne(e => e.TravelSpot)
+                .HasForeignKey(e => e.TravelSpotId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
+
+        modelBuilder.Entity<TravelPreferenceRecord>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.UserId);
+
+            // Configure Interests as a comma-separated string for simple relational storage
+            // Npgsql can handle List<string>, but for general SQL compatibility:
+            entity.Property(e => e.Interests)
+                .HasConversion(
+                    v => string.Join(',', v),
+                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
+                .Metadata.SetValueComparer(new ValueComparer<List<string>>(
+                    (c1, c2) => c1 != null && c2 != null && c1.SequenceEqual(c2),
+                    c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                    c => c.ToList()));
+        });
+
+        modelBuilder.Entity<SavedGem>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.TravelSpotId);
+        });
+
+        modelBuilder.Entity<Booking>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.TravelSpotId);
+        });
+
+        modelBuilder.Entity<AdminGem>().HasKey(e => e.Id);
+        modelBuilder.Entity<ItineraryTemplate>().HasKey(e => e.Id);
+        modelBuilder.Entity<AdminPartner>().HasKey(e => e.Id);
     }
 }

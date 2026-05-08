@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SugboGo.Models;
 
@@ -30,6 +31,10 @@ public sealed class TravelPreferenceRecord
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string UserId { get; set; } = string.Empty;
+
+    [ForeignKey("UserId")]
+    public UserAccount? User { get; set; }
+
     public string Email { get; set; } = string.Empty;
     public List<string> Interests { get; set; } = [];
     public int AdventureLevel { get; set; }

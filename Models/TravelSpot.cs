@@ -28,4 +28,9 @@ public sealed class TravelSpot
     public string Region { get; set; } = string.Empty;
 
     public bool IsPopular { get; set; }
+
+    // Navigation properties
+    public ICollection<Booking> Bookings { get; set; } = [];
+    public ICollection<SavedGem> SavedGems { get; set; } = [];
+    public ICollection<DestinationPost> DestinationPosts { get; set; } = [];
 }
