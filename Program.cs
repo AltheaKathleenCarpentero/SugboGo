@@ -21,7 +21,13 @@ builder.Logging.AddDebug();
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<SugboGoDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions =>
+        {
+            npgsqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+            npgsqlOptions.CommandTimeout(60);
+        }));
 
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "App_Data", "DataProtectionKeys")))

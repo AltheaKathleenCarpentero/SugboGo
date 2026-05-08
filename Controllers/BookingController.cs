@@ -14,13 +14,19 @@ public class BookingController : Controller
     private readonly ITravelPreferenceStore _preferenceStore;
     private readonly ICebuRecommendationService _recommendationService;
     private readonly SugboGoDbContext _dbContext;
+    private readonly ILogger<BookingController> _logger;
     private static readonly IReadOnlyDictionary<string, BookingDestinationSeed> DestinationCatalog = BuildDestinationCatalog();
 
-    public BookingController(ITravelPreferenceStore preferenceStore, ICebuRecommendationService recommendationService, SugboGoDbContext dbContext)
+    public BookingController(
+        ITravelPreferenceStore preferenceStore,
+        ICebuRecommendationService recommendationService,
+        SugboGoDbContext dbContext,
+        ILogger<BookingController> logger)
     {
         _preferenceStore = preferenceStore;
         _recommendationService = recommendationService;
         _dbContext = dbContext;
+        _logger = logger;
     }
 
     [Authorize]
@@ -100,7 +106,28 @@ public class BookingController : Controller
         };
 
         _dbContext.Bookings.Add(booking);
-        await _dbContext.SaveChangesAsync();
+        try
+        {
+            await _dbContext.SaveChangesAsync();
+        }
+        catch (DbUpdateException exception)
+        {
+            _logger.LogError(exception, "Booking could not be saved for user {UserId}.", booking.UserId);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+            {
+                success = false,
+                message = "Booking is temporarily unavailable while the database finishes syncing. Please try again in a moment."
+            });
+        }
+        catch (InvalidOperationException exception) when (exception.InnerException is not null)
+        {
+            _logger.LogError(exception, "Booking could not connect to the database for user {UserId}.", booking.UserId);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+            {
+                success = false,
+                message = "Booking is temporarily unavailable because the database connection timed out. Please try again."
+            });
+        }
 
         return Json(new { success = true, bookingId = booking.Id, qrCode = booking.QrCode });
     }
