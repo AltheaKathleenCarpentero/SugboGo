@@ -1,11 +1,10 @@
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace SugboGo.Data.Migrations
 {
     /// <inheritdoc />
-    [Migration("20260508061500_AddTravelSpots")]
     public partial class AddTravelSpots : Migration
     {
         /// <inheritdoc />
