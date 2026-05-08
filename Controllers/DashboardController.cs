@@ -14,17 +14,20 @@ public sealed class DashboardController : Controller
     private readonly IDestinationPostStore _postStore;
     private readonly IUserSavedGemStore _savedGemStore;
     private readonly IWebHostEnvironment _environment;
+    private readonly ILogger<DashboardController> _logger;
 
     public DashboardController(
         IDashboardExperienceService dashboardExperienceService,
         IDestinationPostStore postStore,
         IUserSavedGemStore savedGemStore,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        ILogger<DashboardController> logger)
     {
         _dashboardExperienceService = dashboardExperienceService;
         _postStore = postStore;
         _savedGemStore = savedGemStore;
         _environment = environment;
+        _logger = logger;
     }
 
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
@@ -114,7 +117,20 @@ public sealed class DashboardController : Controller
             return BadRequest();
         }
 
-        var post = await _postStore.IncrementLikesAsync(postId, cancellationToken);
+        DestinationPost? post;
+        try
+        {
+            post = await _postStore.IncrementLikesAsync(postId, cancellationToken);
+        }
+        catch (InvalidOperationException exception) when (exception.InnerException is not null)
+        {
+            _logger.LogWarning(exception, "Could not increment likes for post {PostId}.", postId);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+            {
+                message = "Likes are temporarily unavailable. Please try again."
+            });
+        }
+
         return post is null ? NotFound() : Json(new { likes = post.Likes });
     }
 
