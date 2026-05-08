@@ -11,6 +11,14 @@ public sealed class Booking
     [Required]
     public string UserId { get; set; } = string.Empty;
 
+    [ForeignKey("UserId")]
+    public UserAccount? User { get; set; }
+
+    public int? TravelSpotId { get; set; }
+
+    [ForeignKey("TravelSpotId")]
+    public TravelSpot? TravelSpot { get; set; }
+
     [Required]
     public string DestinationName { get; set; } = string.Empty;
 
