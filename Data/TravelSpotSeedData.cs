@@ -4,8 +4,10 @@ namespace SugboGo.Data;
 
 public static class TravelSpotSeedData
 {
-    public static IReadOnlyList<TravelSpot> GetTravelSpots() =>
-    [
+    public static IReadOnlyList<TravelSpot> GetTravelSpots()
+    {
+        TravelSpot[] spots =
+        [
         new() { Id = 1, Name = "Magellan's Cross", Location = "Cebu City", Description = "Historical cross planted by Ferdinand Magellan in 1521.", Category = "Historical", Region = "Cebu City", IsPopular = true },
         new() { Id = 2, Name = "Basilica del Santo Nino", Location = "Cebu City", Description = "Oldest Roman Catholic church in the Philippines.", Category = "Religious", Region = "Cebu City", IsPopular = true },
         new() { Id = 3, Name = "Fort San Pedro", Location = "Cebu City", Description = "Smallest triangular fort in the Philippines.", Category = "Historical", Region = "Cebu City", IsPopular = true },
@@ -143,4 +145,39 @@ public static class TravelSpotSeedData
         new() { Id = 459, Name = "Bukilat Cave", Location = "Camotes Island", Description = "", Category = "Cave", Region = "Camotes" },
         new() { Id = 460, Name = "Gilutungan Island", Location = "Cordova", Description = "", Category = "Island", Region = "Mactan" },
     ];
+
+        foreach (var spot in spots)
+        {
+            spot.ImageUrl = $"/images/{spot.Id}.jpg";
+            
+            // Assign Adventure Level based on Category
+            spot.AdventureLevel = spot.Category switch
+            {
+                "Waterfall" => 4,
+                "Island" => 3,
+                "Mountain" => 5,
+                "Beach" => 2,
+                "Historical" => 1,
+                "Religious" => 1,
+                "Wildlife" => 3,
+                "Theme Park" => 3,
+                _ => 2
+            };
+
+            // Assign Base Price based on Category
+            spot.BasePrice = spot.Category switch
+            {
+                "Island" => 3500m,
+                "Waterfall" => 1800m,
+                "Mountain" => 1200m,
+                "Wildlife" => 2500m,
+                "Theme Park" => 1500m,
+                "Historical" => 800m,
+                "Religious" => 500m,
+                _ => 2000m
+            };
+        }
+
+        return spots;
+    }
 }

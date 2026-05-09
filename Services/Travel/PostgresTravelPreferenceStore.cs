@@ -22,9 +22,16 @@ public sealed class PostgresTravelPreferenceStore : ITravelPreferenceStore
 
     public async Task<TravelPreferenceRecord?> FindLatestByUserIdAsync(string userId, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrEmpty(userId))
+        {
+            return null;
+        }
+
         return await _dbContext.TravelPreferences
+            .AsNoTracking()
+            .Where(p => p.UserId == userId)
             .OrderByDescending(p => p.UpdatedAt)
-            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<TravelPreferenceRecord> SaveAsync(TravelPreferenceRecord preference, CancellationToken cancellationToken = default)
@@ -38,7 +45,8 @@ public sealed class PostgresTravelPreferenceStore : ITravelPreferenceStore
         {
             // Update existing record
             existing.Email = preference.Email;
-            existing.Interests = preference.Interests;
+            existing.PlaceInterests = preference.PlaceInterests;
+            existing.ActivityInterests = preference.ActivityInterests;
             existing.AdventureLevel = preference.AdventureLevel;
             existing.TravelPace = preference.TravelPace;
             existing.BudgetRange = preference.BudgetRange;

@@ -4401,7 +4401,11 @@ button {
     padding: clamp(28px, 5vw, 56px) 0 clamp(56px, 8vw, 96px);
 }
 
-.preference-shell,
+.preference-shell {
+    width: min(100% - 32px, 920px);
+    margin: 0 auto;
+}
+
 .recommendation-shell {
     width: min(100% - 32px, 1160px);
     margin: 0 auto;
@@ -4418,7 +4422,9 @@ button {
 
 .preference-hero {
     display: block;
-    max-width: 780px;
+    max-width: 720px;
+    margin-inline: auto;
+    text-align: center;
 }
 
 .preference-hero h1,
@@ -4431,6 +4437,10 @@ button {
     font-weight: 900;
     line-height: 1.02;
     letter-spacing: 0;
+}
+
+.preference-hero h1 {
+    font-size: clamp(2rem, 5vw, 4.2rem);
 }
 
 .preference-hero p:not(.lp-kicker),
@@ -4473,13 +4483,19 @@ button {
 
 .interest-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 12px;
     margin-top: 22px;
 }
 
+.interest-grid--compact {
+    grid-template-columns: repeat(3, 1fr);
+}
+
 .interest-option {
     display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
     min-height: 150px;
     align-content: start;
     border: 1px solid var(--lp-line);
@@ -4500,6 +4516,7 @@ button {
     width: 18px;
     height: 18px;
     accent-color: var(--lp-teal);
+    margin-top: 3px;
 }
 
 .interest-option span,
@@ -5273,4 +5290,128 @@ button {
     .feed-engagement {
         padding-inline: 14px;
     }
+}
+
+/* Booking Bundle Switcher & Modal */
+.bundle-switcher {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.bundle-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid var(--lp-cream-dark);
+    background: var(--lp-white);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.bundle-btn strong {
+    color: var(--lp-ink);
+    font-size: 0.95rem;
+}
+
+.bundle-btn small {
+    color: var(--lp-ink-light);
+    font-size: 0.8rem;
+}
+
+.bundle-btn:hover {
+    border-color: var(--lp-teal);
+    background: var(--lp-cream);
+}
+
+.bundle-btn.is-active {
+    border-color: var(--lp-teal);
+    background: rgba(30, 58, 138, 0.05);
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.1);
+}
+
+.booking-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.booking-modal__content {
+    background: var(--lp-white);
+    width: min(90%, 800px);
+    max-height: 80vh;
+    border-radius: 20px;
+    padding: 32px;
+    overflow-y: auto;
+    position: relative;
+}
+
+.booking-modal header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.booking-modal h3 {
+    margin: 0;
+    font-family: var(--lp-font-head);
+}
+
+.booking-modal [data-modal-close] {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    color: var(--lp-ink-light);
+}
+
+.destination-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.dest-card {
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--lp-cream-dark);
+    text-decoration: none;
+    transition: transform 0.2s ease;
+}
+
+.dest-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--lp-teal);
+}
+
+.dest-card img {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+}
+
+.dest-card div {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.dest-card strong {
+    color: var(--lp-ink);
+    font-size: 0.9rem;
+}
+
+.dest-card small {
+    color: var(--lp-ink-light);
+    font-size: 0.8rem;
 }

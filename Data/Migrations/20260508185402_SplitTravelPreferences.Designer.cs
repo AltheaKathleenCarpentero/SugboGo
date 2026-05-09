@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SugboGo.Data;
@@ -11,9 +12,11 @@ using SugboGo.Data;
 namespace SugboGo.Data.Migrations
 {
     [DbContext(typeof(SugboGoDbContext))]
-    partial class SugboGoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260508185402_SplitTravelPreferences")]
+    partial class SplitTravelPreferences
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -365,12 +368,6 @@ namespace SugboGo.Data.Migrations
                     b.Property<int>("Id")
                         .HasColumnType("integer");
 
-                    b.Property<int>("AdventureLevel")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("BasePrice")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<string>("Category")
                         .IsRequired()
                         .HasMaxLength(80)
@@ -380,10 +377,6 @@ namespace SugboGo.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(600)
                         .HasColumnType("character varying(600)");
-
-                    b.Property<string>("ImageUrl")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
 
                     b.Property<bool>("IsPopular")
                         .HasColumnType("boolean");

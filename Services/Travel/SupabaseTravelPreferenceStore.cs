@@ -76,6 +76,12 @@ public sealed class SupabaseTravelPreferenceStore : ITravelPreferenceStore
         [JsonPropertyName("interests_json")]
         public string InterestsJson { get; set; } = "[]";
 
+        [JsonPropertyName("place_interests_json")]
+        public string PlaceInterestsJson { get; set; } = "[]";
+
+        [JsonPropertyName("activity_interests_json")]
+        public string ActivityInterestsJson { get; set; } = "[]";
+
         [JsonPropertyName("adventure_level")]
         public int AdventureLevel { get; set; }
 
@@ -102,6 +108,8 @@ public sealed class SupabaseTravelPreferenceStore : ITravelPreferenceStore
                 UserId = record.UserId,
                 Email = record.Email,
                 InterestsJson = JsonSerializer.Serialize(record.Interests, jsonOptions),
+                PlaceInterestsJson = JsonSerializer.Serialize(record.PlaceInterests, jsonOptions),
+                ActivityInterestsJson = JsonSerializer.Serialize(record.ActivityInterests, jsonOptions),
                 AdventureLevel = record.AdventureLevel,
                 TravelPace = record.TravelPace,
                 BudgetRange = record.BudgetRange,
@@ -113,12 +121,17 @@ public sealed class SupabaseTravelPreferenceStore : ITravelPreferenceStore
 
         public TravelPreferenceRecord ToRecord(JsonSerializerOptions jsonOptions)
         {
+            var legacyInterests = JsonSerializer.Deserialize<List<string>>(InterestsJson, jsonOptions) ?? [];
+            var placeInterests = JsonSerializer.Deserialize<List<string>>(PlaceInterestsJson, jsonOptions) ?? [];
+            var activityInterests = JsonSerializer.Deserialize<List<string>>(ActivityInterestsJson, jsonOptions) ?? [];
+
             return new TravelPreferenceRecord
             {
                 Id = Id,
                 UserId = UserId,
                 Email = Email,
-                Interests = JsonSerializer.Deserialize<List<string>>(InterestsJson, jsonOptions) ?? [],
+                PlaceInterests = placeInterests.Count == 0 ? legacyInterests : placeInterests,
+                ActivityInterests = activityInterests,
                 AdventureLevel = AdventureLevel,
                 TravelPace = TravelPace,
                 BudgetRange = BudgetRange,

@@ -22,6 +22,9 @@ public static class TravelSpotSeeder
                 existing.Category = seed.Category;
                 existing.Region = seed.Region;
                 existing.IsPopular = seed.IsPopular;
+                existing.ImageUrl = seed.ImageUrl;
+                existing.AdventureLevel = seed.AdventureLevel;
+                existing.BasePrice = seed.BasePrice;
                 continue;
             }
 

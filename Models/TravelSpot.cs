@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SugboGo.Models;
 
@@ -28,6 +29,15 @@ public sealed class TravelSpot
     public string Region { get; set; } = string.Empty;
 
     public bool IsPopular { get; set; }
+
+    [StringLength(255)]
+    public string? ImageUrl { get; set; }
+
+    [Range(1, 5)]
+    public int AdventureLevel { get; set; } = 3;
+
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal BasePrice { get; set; } = 2500m;
 
     // Navigation properties
     public ICollection<Booking> Bookings { get; set; } = [];

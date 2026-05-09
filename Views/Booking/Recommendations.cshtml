@@ -10,7 +10,7 @@
             <div>
                 <p class="lp-kicker">Step 3 of 3</p>
                 <h1>Your best Cebu matches.</h1>
-                <p>These recommendations are ranked from your saved survey: @string.Join(", ", Model.Preferences.Interests).</p>
+                <p>Ranked from your saved places (@string.Join(", ", Model.Preferences.PlaceInterests)) and activities (@string.Join(", ", Model.Preferences.ActivityInterests)).</p>
             </div>
             <a class="booking-link-btn" asp-controller="Booking" asp-action="Survey">Update preferences</a>
         </header>
@@ -34,6 +34,9 @@
                             }
                         </div>
                         <strong>@item.Reason</strong>
+                        <div class="recommendation-card__actions">
+                            <a href="/Booking?id=@item.Destination.Id&type=UserSelected" class="booking-primary">Book this trip</a>
+                        </div>
                     </div>
                 </article>
             }
