@@ -359,6 +359,7 @@ const initBookingFlow = () => {
     const reviewSummary = wizard.querySelector('[data-review-summary]');
     const paymentSim = wizard.querySelector('[data-payment-sim]');
     const confIdDisplay = wizard.querySelector('[data-conf-id]');
+    const submitBookingButton = wizard.querySelector('#btn-submit-booking');
 
     const state = {
         destinationId,
@@ -376,7 +377,27 @@ const initBookingFlow = () => {
         basePrice: basePrice,
         addonsPrice: 0,
         taxesAndFees: 0,
-        totalPrice: basePrice
+        totalPrice: basePrice,
+        paymentMethod: 'GCash',
+        isSubmitting: false
+    };
+
+    const showBookingError = (message) => {
+        if (!paymentSim) {
+            return;
+        }
+
+        paymentSim.hidden = false;
+        paymentSim.innerHTML = `<p>${escapeHtml(message)}</p>`;
+    };
+
+    const showBookingProgress = () => {
+        if (!paymentSim) {
+            return;
+        }
+
+        paymentSim.hidden = false;
+        paymentSim.innerHTML = '<div class="spinner"></div><p>Securing your Cebu adventure...</p>';
     };
 
     const updatePricing = () => {
@@ -410,6 +431,10 @@ const initBookingFlow = () => {
     };
 
     const setStep = (stepName) => {
+        if ((stepName === 'review' || stepName === 'payment') && !captureFormState()) {
+            return;
+        }
+
         panels.forEach((p) => {
             const isActive = p.dataset.bookingStep === stepName;
             p.classList.toggle('is-active', isActive);
@@ -426,9 +451,7 @@ const initBookingFlow = () => {
         wizard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
-    const renderReview = () => {
-        if (!reviewSummary) return;
-
+    const captureFormState = () => {
         state.travelDate = wizard.querySelector('input[name="travelDate"]')?.value || '';
         const travelerSelect = wizard.querySelector('select[name="travelerType"]');
         state.travelerType = travelerSelect?.value || wizard.querySelector('input[name="travelerType"]:checked')?.value || 'Solo';
@@ -437,6 +460,18 @@ const initBookingFlow = () => {
         state.selectedAccommodation = wizard.querySelector('input[name="accommodation"]:checked')?.value || '';
         state.selectedTransportation = wizard.querySelector('input[name="transportation"]:checked')?.value || '';
         state.travelerNotes = wizard.querySelector('textarea[name="travelerNotes"]')?.value || '';
+
+        if (!state.travelDate) {
+            showBookingError('Please choose a travel date before continuing.');
+            wizard.querySelector('input[name="travelDate"]')?.focus();
+            return false;
+        }
+
+        return true;
+    };
+
+    const renderReview = () => {
+        if (!reviewSummary || !captureFormState()) return;
 
         const row = (label, value) => `<div class="review-item"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(value)}</span></div>`;
         reviewSummary.innerHTML = `
@@ -453,13 +488,27 @@ const initBookingFlow = () => {
         `;
     };
 
-    const handlePayment = (method) => {
-        if (paymentSim) paymentSim.hidden = false;
-
+    const selectPaymentMethod = (method) => {
         state.paymentMethod = method;
-        renderReview();
+        wizard.querySelectorAll('[data-pay-method]').forEach(btn => {
+            const isSelected = btn.dataset.payMethod === method;
+            btn.classList.toggle('is-active', isSelected);
+            btn.setAttribute('aria-pressed', String(isSelected));
+        });
+    };
 
-        // Send to server
+    const submitBooking = () => {
+        if (state.isSubmitting || !captureFormState()) {
+            return;
+        }
+
+        state.isSubmitting = true;
+        if (submitBookingButton) {
+            submitBookingButton.disabled = true;
+            submitBookingButton.textContent = 'Completing...';
+        }
+        showBookingProgress();
+
         fetch('/Booking/ConfirmBooking', {
             method: 'POST',
             headers: {
@@ -468,18 +517,26 @@ const initBookingFlow = () => {
             },
             body: JSON.stringify(state)
         })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    if (confIdDisplay) confIdDisplay.textContent = data.bookingId.substring(0, 8).toUpperCase();
-                    renderQr(data.qrCode || data.bookingId);
-                    setTimeout(() => setStep('success'), 1500);
+            .then(async res => {
+                const payload = await res.json().catch(() => null);
+                if (!res.ok || !payload?.success) {
+                    throw new Error(payload?.message || 'Payment could not be completed. Please try again.');
                 }
+
+                return payload;
             })
-            .catch(() => {
-                if (paymentSim) {
-                    paymentSim.innerHTML = '<p>Payment could not be completed. Please try again.</p>';
+            .then(data => {
+                if (confIdDisplay) confIdDisplay.textContent = data.bookingId.substring(0, 8).toUpperCase();
+                renderQr(data.qrCode || data.bookingId);
+                setTimeout(() => setStep('success'), 900);
+            })
+            .catch((error) => {
+                state.isSubmitting = false;
+                if (submitBookingButton) {
+                    submitBookingButton.disabled = false;
+                    submitBookingButton.textContent = 'Complete Booking';
                 }
+                showBookingError(error.message);
             });
     };
 
@@ -514,10 +571,12 @@ const initBookingFlow = () => {
     });
 
     wizard.querySelectorAll('[data-pay-method]').forEach(btn => {
-        btn.addEventListener('click', () => handlePayment(btn.dataset.payMethod));
+        btn.addEventListener('click', () => selectPaymentMethod(btn.dataset.payMethod));
     });
 
     updatePricing();
+    selectPaymentMethod(state.paymentMethod);
+    submitBookingButton?.addEventListener('click', submitBooking);
 };
 
 const initAccountFlow = () => {
