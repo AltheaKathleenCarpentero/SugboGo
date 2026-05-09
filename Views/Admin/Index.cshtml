@@ -1,246 +1,173 @@
 @model AdminDashboardViewModel
 
 @{
-    ViewData["Title"] = "Admin Command Center";
-    Layout = null; // We'll use a custom shell for the admin dashboard to keep it completely separate
+    ViewData["Title"] = "Command Center Overview";
+    Layout = "_AdminLayout";
+
+    static string StatusClass(string status)
+    {
+        return string.IsNullOrWhiteSpace(status)
+            ? "status--pending"
+            : $"status--{status.Trim().ToLowerInvariant().Replace(" ", "-")}";
+    }
 }
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SugboGo | Admin Command Center</title>
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <style>
-        :root {
-            --admin-bg: #0d1117;
-            --admin-surface: #161b22;
-            --admin-border: #30363d;
-            --admin-text: #c9d1d9;
-            --admin-accent: #58a6ff;
-            --admin-success: #238636;
-            --admin-warning: #d29922;
-            --admin-danger: #da3633;
-        }
+<header id="dashboard" class="admin-header" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px;">
+    <div>
+        <p style="color: #8b949e; margin: 0 0 4px 0; font-size: 0.9rem;">Welcome back,</p>
+        <h1 style="margin: 0; font-size: 1.8rem; font-weight: 700;">Command Center Overview</h1>
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <button class="sg-btn" type="button" style="background: var(--admin-surface); border: 1px solid var(--admin-border); color: white; padding: 8px 16px; border-radius: 6px;">Export Data</button>
+        <button class="sg-btn" type="button" style="background: var(--admin-accent); color: white; border: none; padding: 8px 16px; border-radius: 6px;">Generate Report</button>
+    </div>
+</header>
 
-        body.admin-portal {
-            background: var(--admin-bg);
-            color: var(--admin-text);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-            margin: 0;
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .admin-sidebar {
-            width: 260px;
-            background: var(--admin-surface);
-            border-right: 1px solid var(--admin-border);
-            display: flex; flex-direction: column;
-            position: sticky; top: 0; height: 100vh;
-        }
-
-        .admin-brand {
-            padding: 24px; font-size: 1.5rem; font-weight: 800;
-            color: var(--admin-accent); letter-spacing: -1px;
-            display: flex; align-items: center; gap: 12px;
-        }
-
-        .admin-nav { flex: 1; padding: 12px; }
-        .admin-nav a {
-            display: flex; align-items: center; gap: 12px;
-            padding: 12px 16px; color: var(--admin-text);
-            text-decoration: none; border-radius: 6px;
-            margin-bottom: 4px; transition: 0.2s;
-        }
-        .admin-nav a:hover, .admin-nav a.is-active {
-            background: rgba(88, 166, 255, 0.1); color: var(--admin-accent);
-        }
-
-        .admin-main { flex: 1; padding: 32px; overflow-y: auto; }
-        .admin-header {
-            display: flex; justify-content: space-between; align-items: flex-end;
-            margin-bottom: 32px;
-        }
-        .admin-header h1 { margin: 0; font-size: 1.8rem; font-weight: 700; }
-
-        .kpi-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 24px; margin-bottom: 32px;
-        }
-        .kpi-card {
-            background: var(--admin-surface); border: 1px solid var(--admin-border);
-            padding: 24px; border-radius: 8px;
-        }
-        .kpi-card label { font-size: 0.85rem; color: #8b949e; display: block; margin-bottom: 8px; }
-        .kpi-card strong { font-size: 2rem; display: block; margin-bottom: 4px; }
-        .kpi-card small { color: var(--admin-accent); font-size: 0.85rem; }
-
-        .admin-section {
-            background: var(--admin-surface); border: 1px solid var(--admin-border);
-            border-radius: 8px; margin-bottom: 32px; overflow: hidden;
-        }
-        .section-header {
-            padding: 16px 24px; border-bottom: 1px solid var(--admin-border);
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .section-header h2 { margin: 0; font-size: 1rem; font-weight: 600; }
-
-        .admin-table { width: 100%; border-collapse: collapse; }
-        .admin-table th {
-            text-align: left; padding: 12px 24px;
-            background: rgba(255, 255, 255, 0.02);
-            font-size: 0.75rem; text-transform: uppercase;
-            letter-spacing: 0.05em; color: #8b949e;
-        }
-        .admin-table td { padding: 16px 24px; border-top: 1px solid var(--admin-border); font-size: 0.9rem; }
-
-        .status-pill { padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
-        .status--pending { background: rgba(210, 153, 34, 0.15); color: var(--admin-warning); }
-        .status--confirmed { background: rgba(35, 134, 54, 0.15); color: var(--admin-success); }
-        .status--paid { background: rgba(88, 166, 255, 0.15); color: var(--admin-accent); }
-
-        .pipeline-scroll {
-            display: flex; gap: 16px; padding: 24px;
-            overflow-x: auto; background: rgba(0,0,0,0.1);
-        }
-        .pipeline-col { min-width: 280px; width: 280px; }
-        .pipeline-col h3 { font-size: 0.85rem; color: #8b949e; margin-bottom: 16px; display: flex; justify-content: space-between; }
-
-        .pipeline-card {
-            background: var(--admin-bg); border: 1px solid var(--admin-border);
-            padding: 16px; border-radius: 6px; margin-bottom: 12px; cursor: grab;
-        }
-        .pipeline-card:active { cursor: grabbing; }
-        .pipeline-card strong { display: block; margin-bottom: 4px; font-size: 0.95rem; }
-        .pipeline-card span { display: block; font-size: 0.8rem; color: #8b949e; margin-bottom: 8px; }
-        .pipeline-card b { font-size: 0.75rem; color: var(--admin-accent); }
-    </style>
-</head>
-<body class="admin-portal">
-    <aside class="admin-sidebar">
-        <div class="admin-brand"><span style="font-size: 1.8rem;">🚀</span> SugboGo Admin</div>
-        <nav class="admin-nav">
-            <a href="/Admin" class="is-active">Dashboard</a>
-            <a href="/Admin/Bookings">Bookings</a>
-            <a href="/Admin/Users">Travelers</a>
-            <a href="/Admin/Gems">Hidden Gems</a>
-            <a href="/Admin/Partners">Partners</a>
-            <div style="margin-top: 32px; padding: 12px 16px; font-size: 0.7rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em;">System</div>
-            <a href="/Admin/Settings">Settings</a>
-            <a href="/Home">Back to Site</a>
-        </nav>
-        <div style="padding: 24px; border-top: 1px solid var(--admin-border);">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <div style="width: 32px; height: 32px; background: var(--admin-accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: white;">A</div>
-                <div>
-                    <div style="font-size: 0.85rem; font-weight: 600;">SugboGo Admin</div>
-                    <div style="font-size: 0.7rem; color: #8b949e;">Master Curator</div>
-                </div>
-            </div>
+<div class="kpi-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 32px;">
+    @foreach (var kpi in Model.Kpis)
+    {
+        <div class="kpi-card" style="background: var(--admin-surface); border: 1px solid var(--admin-border); padding: 24px; border-radius: 8px;">
+            <label style="font-size: 0.85rem; color: #8b949e; display: block; margin-bottom: 8px;">@kpi.Label</label>
+            <strong style="font-size: 2rem; display: block; margin-bottom: 4px;">@kpi.Value</strong>
+            <small style="color: var(--admin-accent); font-size: 0.85rem;">@kpi.Delta</small>
         </div>
-    </aside>
+    }
+</div>
 
-    <main class="admin-main">
-        <header class="admin-header">
-            <div>
-                <p style="color: #8b949e; margin: 0 0 4px 0; font-size: 0.9rem;">Welcome back,</p>
-                <h1>Command Center Overview</h1>
-            </div>
-            <div style="display: flex; gap: 12px;">
-                <button class="sg-btn sg-btn--outline" style="background: var(--admin-surface); border-color: var(--admin-border); color: white;">Export Data</button>
-                <button class="sg-btn sg-btn--primary" style="background: var(--admin-accent); color: white; border: none;">Generate Report</button>
-            </div>
-        </header>
-
-        <div class="kpi-grid">
-            @foreach (var kpi in Model.Kpis)
+<section id="bookings" class="admin-section">
+    <div class="section-header">
+        <h2 style="margin: 0; font-size: 1rem; font-weight: 600;">Recent Bookings</h2>
+        <a href="#bookings" style="font-size: 0.85rem; color: var(--admin-accent); text-decoration: none;">View All</a>
+    </div>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Traveler</th>
+                <th>Destination</th>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Bookings.Count == 0)
             {
-                <div class="kpi-card">
-                    <label>@kpi.Label</label>
-                    <strong>@kpi.Value</strong>
-                    <small>@kpi.Delta</small>
-                </div>
+                <tr>
+                    <td colspan="5" style="color: #8b949e;">No bookings have been submitted yet.</td>
+                </tr>
             }
-        </div>
-
-        <section class="admin-section">
-            <div class="section-header">
-                <h2>Real-time Booking Pipeline</h2>
-                <div style="font-size: 0.75rem; color: var(--admin-accent);">Drag and drop to update status</div>
-            </div>
-            <div class="pipeline-scroll" data-admin-dashboard>
-                @foreach (var column in Model.Pipeline)
+            else
+            {
+                @foreach (var booking in Model.Bookings.Take(10))
                 {
-                    <div class="pipeline-col admin-kanban__column">
-                        <h3>@column.Name <span>@column.Cards.Count</span></h3>
-                        @foreach (var card in column.Cards)
-                        {
-                            <div class="pipeline-card admin-kanban-card" draggable="true">
-                                <strong>@card.Traveler</strong>
-                                <span>@card.TravelWindow</span>
-                                <b>@card.Priority</b>
-                            </div>
-                        }
-                    </div>
+                    <tr>
+                        <td>@booking.UserName</td>
+                        <td>@booking.Destination</td>
+                        <td>@booking.Date</td>
+                        <td>PHP @booking.Amount.ToString("N0")</td>
+                        <td>
+                            <span class="status-pill @StatusClass(booking.Status)">@booking.Status</span>
+                        </td>
+                    </tr>
                 }
-            </div>
-        </section>
+            }
+        </tbody>
+    </table>
+</section>
 
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
-            <section class="admin-section">
-                <div class="section-header">
-                    <h2>Recent Bookings</h2>
-                    <a href="/Admin/Bookings" style="font-size: 0.85rem; color: var(--admin-accent); text-decoration: none;">View All</a>
-                </div>
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Traveler</th>
-                            <th>Destination</th>
-                            <th>Date</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var booking in Model.Bookings.Take(10))
-                        {
-                            <tr>
-                                <td>@booking.UserName</td>
-                                <td>@booking.Destination</td>
-                                <td>@booking.Date</td>
-                                <td>PHP @booking.Amount.ToString("N0")</td>
-                                <td>
-                                    <span class="status-pill status--@booking.Status.ToLowerInvariant()">@booking.Status</span>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </section>
+<section id="travelers" class="admin-section">
+    <div class="section-header">
+        <h2 style="margin: 0; font-size: 1rem; font-weight: 600;">Travelers</h2>
+        <span style="font-size: 0.85rem; color: #8b949e;">@Model.Flashpackers.Count profile(s)</span>
+    </div>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Vibe</th>
+                <th>Constraints</th>
+                <th>Trips</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var traveler in Model.Flashpackers.Take(8))
+            {
+                <tr>
+                    <td>@traveler.Name</td>
+                    <td>@traveler.Vibe</td>
+                    <td>@traveler.Constraints</td>
+                    <td>@traveler.CebuTrips</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</section>
 
-            <section class="admin-section">
-                <div class="section-header"><h2>Traveler Vibe Trends</h2></div>
-                <div style="padding: 24px;">
-                    @foreach (var trend in Model.VibeTrends)
-                    {
-                        <div style="margin-bottom: 20px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem;">
-                                <span>@trend.Vibe</span>
-                                <strong>@trend.Percentage%</strong>
-                            </div>
-                            <div style="height: 6px; background: var(--admin-border); border-radius: 3px; overflow: hidden;">
-                                <div style="height: 100%; width: @trend.Percentage%; background: var(--admin-accent);"></div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </section>
-        </div>
-    </main>
+<section id="gems" class="admin-section">
+    <div class="section-header">
+        <h2 style="margin: 0; font-size: 1rem; font-weight: 600;">Hidden Gems</h2>
+        <span style="font-size: 0.85rem; color: #8b949e;">@Model.Gems.Count curated spot(s)</span>
+    </div>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Score</th>
+                <th>Status</th>
+                <th>Quality Check</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var gem in Model.Gems.Take(8))
+            {
+                <tr>
+                    <td>@gem.Name</td>
+                    <td>@gem.Category</td>
+                    <td>@gem.FlashpackerScore/10</td>
+                    <td><span class="status-pill @StatusClass(gem.Status)">@gem.Status</span></td>
+                    <td>@gem.QualityCheckDate</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</section>
 
-    <script src="~/js/site.js" asp-append-version="true"></script>
-</body>
-</html>
+<section id="partners" class="admin-section">
+    <div class="section-header">
+        <h2 style="margin: 0; font-size: 1rem; font-weight: 600;">Partners</h2>
+        <span style="font-size: 0.85rem; color: #8b949e;">@Model.Partners.Count partner(s)</span>
+    </div>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Contact</th>
+                <th>Commission</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var partner in Model.Partners.Take(8))
+            {
+                <tr>
+                    <td>@partner.Name</td>
+                    <td>@partner.Type</td>
+                    <td>@partner.Contact</td>
+                    <td>@partner.Commission</td>
+                    <td><span class="status-pill @StatusClass(partner.Status)">@partner.Status</span></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</section>
+
+<section id="system" class="admin-section">
+    <div class="section-header">
+        <h2 style="margin: 0; font-size: 1rem; font-weight: 600;">System</h2>
+    </div>
+    <div style="padding: 20px 24px; color: #8b949e; font-size: 0.9rem;">
+        Dashboard data is populated from registered users, travel preferences, bookings, destination posts, and the configured admin data store.
+    </div>
+</section>
