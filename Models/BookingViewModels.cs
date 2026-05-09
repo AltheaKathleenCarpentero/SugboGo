@@ -18,6 +18,7 @@ public sealed class BookingStepViewModel
 public sealed class BookingDataViewModel
 {
     public string DestinationId { get; set; } = string.Empty;
+    public string BookingType { get; set; } = "UserSelected";
     public string DestinationName { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
     public string Description { get; set; } = string.Empty;

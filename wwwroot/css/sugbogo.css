@@ -5343,6 +5343,10 @@ button {
     z-index: 1000;
 }
 
+.booking-modal[hidden] {
+    display: none;
+}
+
 .booking-modal__content {
     background: var(--lp-white);
     width: min(90%, 800px);

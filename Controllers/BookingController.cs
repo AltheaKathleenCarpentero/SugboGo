@@ -81,15 +81,33 @@ public class BookingController : Controller
     [HttpGet]
     [Route("Booking")]
     [Route("Booking/Index")]
-    public async Task<IActionResult> Index(int? spotId, string? destination, decimal? price, string? image, string type = "UserSelected")
+    public async Task<IActionResult> Index(
+        [FromQuery(Name = "id")] int? id, 
+        [FromQuery(Name = "spotId")] int? spotId,
+        [FromQuery(Name = "destinationId")] int? destinationId,
+        string? destination, 
+        decimal? price, 
+        string? image, 
+        string type = "UserSelected")
     {
         var userId = GetUserId();
         var preferences = await _preferenceStore.FindLatestByUserIdAsync(userId);
+        if (preferences is null)
+        {
+            return RedirectToAction(nameof(Survey), new { returnUrl = $"{Request.Path}{Request.QueryString}" });
+        }
+        
+        // Support multiple parameter names for maximum compatibility
+        int? effectiveId = spotId ?? id ?? destinationId;
         
         TravelSpot? spot = null;
-        if (spotId.HasValue)
+        if (effectiveId.HasValue)
         {
-            spot = await _dbContext.TravelSpots.FindAsync(spotId.Value);
+            spot = await _dbContext.TravelSpots.FindAsync(effectiveId.Value);
+            if (spot is null)
+            {
+                return NotFound($"Travel spot {effectiveId.Value} was not found.");
+            }
         }
         else if (!string.IsNullOrWhiteSpace(destination))
         {
@@ -99,7 +117,10 @@ public class BookingController : Controller
         // Build destination data with fallbacks
         var destinationData = BuildDestinationData(spot, destination ?? "Custom Adventure", price ?? 3000m, image ?? "/images/hero-bg.jpg");
 
-        ViewBag.AllDestinations = await _dbContext.TravelSpots.ToListAsync();
+        ViewBag.AllDestinations = await _dbContext.TravelSpots
+            .OrderByDescending(spot => spot.IsPopular)
+            .ThenBy(spot => spot.Name)
+            .ToListAsync();
 
         var model = new BookingStepViewModel
         {
@@ -113,6 +134,7 @@ public class BookingController : Controller
             Data = new BookingDataViewModel
             {
                 DestinationId = destinationData.Id,
+                BookingType = type,
                 DestinationName = destinationData.Name,
                 BasePrice = destinationData.BasePrice,
                 ImageUrl = destinationData.ImageUrl,
@@ -135,19 +157,30 @@ public class BookingController : Controller
     [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ConfirmBooking(BookingDataViewModel data)
+    public async Task<IActionResult> ConfirmBooking([FromBody] BookingDataViewModel data, CancellationToken cancellationToken)
     {
         if (data == null || string.IsNullOrWhiteSpace(data.DestinationName))
         {
             return BadRequest(new { success = false, message = "Invalid booking data." });
         }
 
+        var userId = GetUserId();
+        var preferences = await _preferenceStore.FindLatestByUserIdAsync(userId, cancellationToken);
+        if (preferences is null)
+        {
+            return BadRequest(new { success = false, message = "Please complete your travel preferences before booking." });
+        }
+
         int? travelSpotId = int.TryParse(data.DestinationId, out int id) ? id : null;
+        var selectionType = string.Equals(data.BookingType, "SystemSelected", StringComparison.OrdinalIgnoreCase)
+            ? "SystemSelected"
+            : "UserSelected";
 
         var booking = new Booking
         {
-            UserId = GetUserId(),
+            UserId = userId,
             TravelSpotId = travelSpotId,
+            SelectionType = selectionType,
             DestinationName = data.DestinationName,
             ImageUrl = data.ImageUrl,
             Location = data.Location,
@@ -170,7 +203,7 @@ public class BookingController : Controller
         _dbContext.Bookings.Add(booking);
         try
         {
-            await _dbContext.SaveChangesAsync();
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateException exception)
         {

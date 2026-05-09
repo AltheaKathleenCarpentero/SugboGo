@@ -1,288 +1,246 @@
 @model AdminDashboardViewModel
 
 @{
-    ViewData["Title"] = "Admin Dashboard";
-    var firstGem = Model.Gems.FirstOrDefault();
-    var mapUrl = firstGem is null
-        ? "https://www.openstreetmap.org/export/embed.html?bbox=123.82%2C10.24%2C123.98%2C10.40&layer=mapnik"
-        : $"https://www.openstreetmap.org/export/embed.html?bbox=123.82%2C10.24%2C123.98%2C10.40&layer=mapnik&marker={firstGem.Latitude}%2C{firstGem.Longitude}";
+    ViewData["Title"] = "Admin Command Center";
+    Layout = null; // We'll use a custom shell for the admin dashboard to keep it completely separate
 }
 
-<section class="admin-page" data-admin-dashboard>
-    <aside class="admin-sidebar" aria-label="Admin navigation">
-        <a class="admin-sidebar__brand" href="/Admin">Sugbo<span>Go</span></a>
-        <nav>
-            @foreach (var item in new[] { "Dashboard", "Trip Pipeline", "Gem Vault", "User Directory", "Partner Hub", "Analytics", "Settings" })
-            {
-                <a href="#@item.ToLowerInvariant().Replace(" ", "-")">@item</a>
-            }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SugboGo | Admin Command Center</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        :root {
+            --admin-bg: #0d1117;
+            --admin-surface: #161b22;
+            --admin-border: #30363d;
+            --admin-text: #c9d1d9;
+            --admin-accent: #58a6ff;
+            --admin-success: #238636;
+            --admin-warning: #d29922;
+            --admin-danger: #da3633;
+        }
+
+        body.admin-portal {
+            background: var(--admin-bg);
+            color: var(--admin-text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .admin-sidebar {
+            width: 260px;
+            background: var(--admin-surface);
+            border-right: 1px solid var(--admin-border);
+            display: flex; flex-direction: column;
+            position: sticky; top: 0; height: 100vh;
+        }
+
+        .admin-brand {
+            padding: 24px; font-size: 1.5rem; font-weight: 800;
+            color: var(--admin-accent); letter-spacing: -1px;
+            display: flex; align-items: center; gap: 12px;
+        }
+
+        .admin-nav { flex: 1; padding: 12px; }
+        .admin-nav a {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 16px; color: var(--admin-text);
+            text-decoration: none; border-radius: 6px;
+            margin-bottom: 4px; transition: 0.2s;
+        }
+        .admin-nav a:hover, .admin-nav a.is-active {
+            background: rgba(88, 166, 255, 0.1); color: var(--admin-accent);
+        }
+
+        .admin-main { flex: 1; padding: 32px; overflow-y: auto; }
+        .admin-header {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            margin-bottom: 32px;
+        }
+        .admin-header h1 { margin: 0; font-size: 1.8rem; font-weight: 700; }
+
+        .kpi-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px; margin-bottom: 32px;
+        }
+        .kpi-card {
+            background: var(--admin-surface); border: 1px solid var(--admin-border);
+            padding: 24px; border-radius: 8px;
+        }
+        .kpi-card label { font-size: 0.85rem; color: #8b949e; display: block; margin-bottom: 8px; }
+        .kpi-card strong { font-size: 2rem; display: block; margin-bottom: 4px; }
+        .kpi-card small { color: var(--admin-accent); font-size: 0.85rem; }
+
+        .admin-section {
+            background: var(--admin-surface); border: 1px solid var(--admin-border);
+            border-radius: 8px; margin-bottom: 32px; overflow: hidden;
+        }
+        .section-header {
+            padding: 16px 24px; border-bottom: 1px solid var(--admin-border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .section-header h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+
+        .admin-table { width: 100%; border-collapse: collapse; }
+        .admin-table th {
+            text-align: left; padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.02);
+            font-size: 0.75rem; text-transform: uppercase;
+            letter-spacing: 0.05em; color: #8b949e;
+        }
+        .admin-table td { padding: 16px 24px; border-top: 1px solid var(--admin-border); font-size: 0.9rem; }
+
+        .status-pill { padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .status--pending { background: rgba(210, 153, 34, 0.15); color: var(--admin-warning); }
+        .status--confirmed { background: rgba(35, 134, 54, 0.15); color: var(--admin-success); }
+        .status--paid { background: rgba(88, 166, 255, 0.15); color: var(--admin-accent); }
+
+        .pipeline-scroll {
+            display: flex; gap: 16px; padding: 24px;
+            overflow-x: auto; background: rgba(0,0,0,0.1);
+        }
+        .pipeline-col { min-width: 280px; width: 280px; }
+        .pipeline-col h3 { font-size: 0.85rem; color: #8b949e; margin-bottom: 16px; display: flex; justify-content: space-between; }
+
+        .pipeline-card {
+            background: var(--admin-bg); border: 1px solid var(--admin-border);
+            padding: 16px; border-radius: 6px; margin-bottom: 12px; cursor: grab;
+        }
+        .pipeline-card:active { cursor: grabbing; }
+        .pipeline-card strong { display: block; margin-bottom: 4px; font-size: 0.95rem; }
+        .pipeline-card span { display: block; font-size: 0.8rem; color: #8b949e; margin-bottom: 8px; }
+        .pipeline-card b { font-size: 0.75rem; color: var(--admin-accent); }
+    </style>
+</head>
+<body class="admin-portal">
+    <aside class="admin-sidebar">
+        <div class="admin-brand"><span style="font-size: 1.8rem;">🚀</span> SugboGo Admin</div>
+        <nav class="admin-nav">
+            <a href="/Admin" class="is-active">Dashboard</a>
+            <a href="/Admin/Bookings">Bookings</a>
+            <a href="/Admin/Users">Travelers</a>
+            <a href="/Admin/Gems">Hidden Gems</a>
+            <a href="/Admin/Partners">Partners</a>
+            <div style="margin-top: 32px; padding: 12px 16px; font-size: 0.7rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em;">System</div>
+            <a href="/Admin/Settings">Settings</a>
+            <a href="/Home">Back to Site</a>
         </nav>
+        <div style="padding: 24px; border-top: 1px solid var(--admin-border);">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 32px; height: 32px; background: var(--admin-accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: white;">A</div>
+                <div>
+                    <div style="font-size: 0.85rem; font-weight: 600;">SugboGo Admin</div>
+                    <div style="font-size: 0.7rem; color: #8b949e;">Master Curator</div>
+                </div>
+            </div>
+        </div>
     </aside>
 
-    <div class="admin-workspace">
-        <header class="admin-top" id="dashboard">
+    <main class="admin-main">
+        <header class="admin-header">
             <div>
-                <p class="lp-kicker">Admin command center</p>
-                <h1>Global Pulse</h1>
+                <p style="color: #8b949e; margin: 0 0 4px 0; font-size: 0.9rem;">Welcome back,</p>
+                <h1>Command Center Overview</h1>
             </div>
-            <div class="admin-top__meta">
-                <span>Live Ops</span>
-                <strong>@DateTime.Now.ToString("MMM d, h:mm tt")</strong>
+            <div style="display: flex; gap: 12px;">
+                <button class="sg-btn sg-btn--outline" style="background: var(--admin-surface); border-color: var(--admin-border); color: white;">Export Data</button>
+                <button class="sg-btn sg-btn--primary" style="background: var(--admin-accent); color: white; border: none;">Generate Report</button>
             </div>
         </header>
 
-        <section class="admin-kpis" aria-label="Business health metrics">
+        <div class="kpi-grid">
             @foreach (var kpi in Model.Kpis)
             {
-                <article>
-                    <span>@kpi.Label</span>
+                <div class="kpi-card">
+                    <label>@kpi.Label</label>
                     <strong>@kpi.Value</strong>
-                    <p>@kpi.Delta</p>
-                </article>
+                    <small>@kpi.Delta</small>
+                </div>
             }
-        </section>
+        </div>
 
         <section class="admin-section">
-            <div class="admin-section__head">
-                <div>
-                    <p class="lp-kicker">Live Transactions</p>
-                    <h2>Recent Bookings</h2>
-                </div>
+            <div class="section-header">
+                <h2>Real-time Booking Pipeline</h2>
+                <div style="font-size: 0.75rem; color: var(--admin-accent);">Drag and drop to update status</div>
             </div>
-            <article class="admin-panel admin-gem-table">
-                <table style="width:100%">
+            <div class="pipeline-scroll" data-admin-dashboard>
+                @foreach (var column in Model.Pipeline)
+                {
+                    <div class="pipeline-col admin-kanban__column">
+                        <h3>@column.Name <span>@column.Cards.Count</span></h3>
+                        @foreach (var card in column.Cards)
+                        {
+                            <div class="pipeline-card admin-kanban-card" draggable="true">
+                                <strong>@card.Traveler</strong>
+                                <span>@card.TravelWindow</span>
+                                <b>@card.Priority</b>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+            <section class="admin-section">
+                <div class="section-header">
+                    <h2>Recent Bookings</h2>
+                    <a href="/Admin/Bookings" style="font-size: 0.85rem; color: var(--admin-accent); text-decoration: none;">View All</a>
+                </div>
+                <table class="admin-table">
                     <thead>
                         <tr>
                             <th>Traveler</th>
                             <th>Destination</th>
                             <th>Date</th>
-                            <th>Status</th>
                             <th>Amount</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var booking in Model.Bookings)
+                        @foreach (var booking in Model.Bookings.Take(10))
                         {
                             <tr>
                                 <td>@booking.UserName</td>
                                 <td>@booking.Destination</td>
                                 <td>@booking.Date</td>
-                                <td><span class="admin-status">@booking.Status</span></td>
                                 <td>PHP @booking.Amount.ToString("N0")</td>
+                                <td>
+                                    <span class="status-pill status--@booking.Status.ToLowerInvariant()">@booking.Status</span>
+                                </td>
                             </tr>
-                        }
-                        @if (!Model.Bookings.Any())
-                        {
-                            <tr><td colspan="5" style="text-align:center; padding: 2rem;">No live bookings recorded yet.</td></tr>
                         }
                     </tbody>
                 </table>
-            </article>
-        </section>
+            </section>
 
-        <section class="admin-pulse-grid">
-            <article class="admin-panel admin-trends" aria-label="Vibe trends">
-                <div class="admin-panel__head">
-                    <h2>Vibe Trends</h2>
-                    <span>Current demand</span>
-                </div>
-                <div class="admin-trend-chart">
+            <section class="admin-section">
+                <div class="section-header"><h2>Traveler Vibe Trends</h2></div>
+                <div style="padding: 24px;">
                     @foreach (var trend in Model.VibeTrends)
                     {
-                        <div class="admin-trend-row">
-                            <span>@trend.Vibe</span>
-                            <div><i style="width:@trend.Percentage%"></i></div>
-                            <strong>@trend.Percentage%</strong>
+                        <div style="margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem;">
+                                <span>@trend.Vibe</span>
+                                <strong>@trend.Percentage%</strong>
+                            </div>
+                            <div style="height: 6px; background: var(--admin-border); border-radius: 3px; overflow: hidden;">
+                                <div style="height: 100%; width: @trend.Percentage%; background: var(--admin-accent);"></div>
+                            </div>
                         </div>
                     }
                 </div>
-            </article>
+            </section>
+        </div>
+    </main>
 
-            <article class="admin-panel admin-alerts" aria-label="Urgent alerts">
-                <div class="admin-panel__head">
-                    <h2>Urgent Alerts</h2>
-                    <span>Needs human action</span>
-                </div>
-                @foreach (var alert in Model.UrgentAlerts)
-                {
-                    <div class="admin-alert">
-                        <strong>@alert.Traveler</strong>
-                        <p>@alert.Issue</p>
-                        <span>@alert.Location</span>
-                        <a href="@alert.ChatUrl" target="_blank" rel="noreferrer">Open chat</a>
-                    </div>
-                }
-            </article>
-        </section>
-
-        <section class="admin-section" id="gem-vault">
-            <div class="admin-section__head">
-                <div>
-                    <p class="lp-kicker">Curation Engine</p>
-                    <h2>Gem Database</h2>
-                </div>
-                <button type="button" class="admin-primary">Add Hidden Gem</button>
-            </div>
-
-            <div class="admin-curation-grid">
-                <article class="admin-panel admin-gem-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Category</th>
-                                <th>Score</th>
-                                <th>Quality Check</th>
-                                <th>Contact</th>
-                                <th>GPS</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var gem in Model.Gems)
-                            {
-                                <tr>
-                                    <td>@gem.Name</td>
-                                    <td>@gem.Category</td>
-                                    <td>@gem.FlashpackerScore/10</td>
-                                    <td>@gem.QualityCheckDate</td>
-                                    <td>@gem.ContactPerson</td>
-                                    <td>@gem.Latitude, @gem.Longitude</td>
-                                    <td><span class="admin-status">@gem.Status</span></td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </article>
-
-                <article class="admin-panel admin-map-panel">
-                    <div class="admin-panel__head">
-                        <h2>Itinerary Mapper</h2>
-                        <span>Route optimization view</span>
-                    </div>
-                    <div class="admin-map">
-                        <iframe title="Admin Cebu gem map" src="@mapUrl" loading="lazy"></iframe>
-                        <div class="admin-map__pins" aria-hidden="true">
-                            @foreach (var gem in Model.Gems)
-                            {
-                                <span style="--x:@gem.MapX%; --y:@gem.MapY%;">@gem.FlashpackerScore</span>
-                            }
-                        </div>
-                    </div>
-                </article>
-            </div>
-        </section>
-
-        <section class="admin-section">
-            <div class="admin-section__head">
-                <div>
-                    <p class="lp-kicker">Template Library</p>
-                    <h2>Base itineraries</h2>
-                </div>
-            </div>
-            <div class="admin-template-grid">
-                @foreach (var template in Model.Templates)
-                {
-                    <article class="admin-panel admin-template" draggable="true">
-                        <span>@template.Vibe</span>
-                        <h3>@template.Name</h3>
-                        <p>@template.Stops</p>
-                        <small>@template.AvgDuration</small>
-                    </article>
-                }
-            </div>
-        </section>
-
-        <section class="admin-section" id="trip-pipeline">
-            <div class="admin-section__head">
-                <div>
-                    <p class="lp-kicker">Booking Pipeline</p>
-                    <h2>Request to completed trip</h2>
-                </div>
-            </div>
-            <div class="admin-kanban" data-admin-kanban>
-                @foreach (var column in Model.Pipeline)
-                {
-                    <section class="admin-kanban__column">
-                        <h3>@column.Name <span>@column.Cards.Count</span></h3>
-                        @foreach (var card in column.Cards)
-                        {
-                            <article class="admin-kanban-card" draggable="true">
-                                <strong>@card.Traveler</strong>
-                                <span>@card.Vibe</span>
-                                <p>@card.TravelWindow</p>
-                                <small>@card.Priority</small>
-                            </article>
-                        }
-                    </section>
-                }
-            </div>
-        </section>
-
-        <section class="admin-section" id="user-directory">
-            <div class="admin-section__head">
-                <div>
-                    <p class="lp-kicker">CRM</p>
-                    <h2>User and profile management</h2>
-                </div>
-            </div>
-            <div class="admin-crm-grid">
-                @foreach (var user in Model.Flashpackers)
-                {
-                    <article class="admin-panel admin-persona">
-                        <span>@user.Vibe</span>
-                        <h3>@user.Name</h3>
-                        <p>@user.Constraints</p>
-                        <blockquote>@user.Feedback</blockquote>
-                        <small>@user.CebuTrips repeat Cebu trip@(user.CebuTrips == 1 ? "" : "s")</small>
-                    </article>
-                }
-            </div>
-        </section>
-
-        <section class="admin-section" id="partner-hub">
-            <div class="admin-section__head">
-                <div>
-                    <p class="lp-kicker">Partner Hub</p>
-                    <h2>Vendors, commissions, and quality audits</h2>
-                </div>
-            </div>
-            <div class="admin-partner-grid">
-                @foreach (var partner in Model.Partners)
-                {
-                    <article class="admin-panel admin-partner">
-                        <span>@partner.Type</span>
-                        <h3>@partner.Name</h3>
-                        <p>Contact: @partner.Contact</p>
-                        <p>Commission: @partner.Commission</p>
-                        <p>Last audit: @partner.LastAudit</p>
-                        <strong>@partner.Status</strong>
-                    </article>
-                }
-            </div>
-        </section>
-
-        <section class="admin-section admin-collab">
-            <div class="admin-section__head">
-                <div>
-                    <p class="lp-kicker">Collaboration Mode</p>
-                    <h2>Local expert suggestions awaiting admin approval</h2>
-                </div>
-            </div>
-            <div class="admin-collab-list">
-                @foreach (var suggestion in Model.CollaborationQueue)
-                {
-                    <article class="admin-panel">
-                        <span>@suggestion.SuggestedBy</span>
-                        <h3>@suggestion.Spot</h3>
-                        <p>@suggestion.Reason</p>
-                        <div>
-                            <button type="button" class="admin-primary" data-admin-approve>Approve</button>
-                            <small>@suggestion.ApprovalStatus</small>
-                        </div>
-                    </article>
-                }
-            </div>
-        </section>
-    </div>
-</section>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+</body>
+</html>

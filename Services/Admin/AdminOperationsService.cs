@@ -31,13 +31,11 @@ public sealed class AdminOperationsService : IAdminOperationsService
 
     public async Task<AdminDashboardViewModel> BuildDashboardAsync(CancellationToken cancellationToken = default)
     {
-        var users = await _userStore.GetAllAsync(cancellationToken);
-        var preferences = await _preferenceStore.GetAllAsync(cancellationToken);
-        var posts = await _postStore.GetAllAsync(cancellationToken);
-        var gems = await _adminDataStore.GetGemsAsync(cancellationToken);
-        var templates = await _adminDataStore.GetTemplatesAsync(cancellationToken);
-        var partners = await _adminDataStore.GetPartnersAsync(cancellationToken);
-        var bookings = await GetBookingsAsync(cancellationToken);
+        var users = await _dbContext.Users.ToListAsync(cancellationToken);
+        var preferences = await _dbContext.TravelPreferences.ToListAsync(cancellationToken);
+        var posts = await _dbContext.DestinationPosts.ToListAsync(cancellationToken);
+        var bookings = await _dbContext.Bookings.OrderByDescending(b => b.CreatedAt).ToListAsync(cancellationToken);
+        
         var latestUser = users.OrderByDescending(user => user.CreatedAt).FirstOrDefault();
 
         return new AdminDashboardViewModel
@@ -45,37 +43,8 @@ public sealed class AdminOperationsService : IAdminOperationsService
             Kpis = BuildKpis(users, preferences, posts, bookings, latestUser),
             VibeTrends = BuildVibeTrends(preferences),
             UrgentAlerts = BuildUrgentAlerts(users, preferences),
-            Gems = gems.Select(g => new GemAdminViewModel
-            {
-                Name = g.Name,
-                Category = g.Category,
-                FlashpackerScore = g.FlashpackerScore,
-                QualityCheckDate = g.QualityCheckDate,
-                ContactPerson = g.ContactPerson,
-                Latitude = g.Latitude,
-                Longitude = g.Longitude,
-                Status = g.Status,
-                MapX = g.MapX,
-                MapY = g.MapY
-            }).ToList(),
-            Templates = templates.Select(t => new ItineraryTemplateViewModel
-            {
-                Name = t.Name,
-                Vibe = t.Vibe,
-                Stops = t.Stops,
-                AvgDuration = t.AvgDuration
-            }).ToList(),
             Pipeline = BuildPipeline(bookings, users, preferences),
             Flashpackers = BuildFlashpackers(users, preferences, posts),
-            Partners = partners.Select(p => new PartnerAdminViewModel
-            {
-                Name = p.Name,
-                Type = p.Type,
-                Contact = p.Contact,
-                Commission = p.Commission,
-                LastAudit = p.LastAudit,
-                Status = p.Status
-            }).ToList(),
             Bookings = bookings.Select(b => new BookingAdminViewModel
             {
                 Id = b.Id,

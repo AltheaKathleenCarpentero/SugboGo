@@ -9,7 +9,7 @@
         : $"{Model.Preferences.BudgetRange}, {Model.Preferences.TravelPace} pace, adventure {Model.Preferences.AdventureLevel}/5";
 }
 
-<section class="booking-flow" data-booking-wizard data-destination-id="@Model.Data.DestinationId" data-destination="@Model.Data.DestinationName" data-base-price="@Model.Data.BasePrice" data-image-url="@Model.Data.ImageUrl" data-location="@Model.Data.Location">
+<section class="booking-flow" data-booking-wizard data-destination-id="@Model.Data.DestinationId" data-booking-type="@Model.BookingType" data-destination="@Model.Data.DestinationName" data-base-price="@Model.Data.BasePrice" data-image-url="@Model.Data.ImageUrl" data-location="@Model.Data.Location">
     @Html.AntiForgeryToken()
 
     <div class="booking-shell">
@@ -29,7 +29,7 @@
                     <p>@Model.Data.Description</p>
 
                     <div class="bundle-switcher">
-                        <a href="/Booking?type=SystemSelected" class="bundle-btn @(Model.BookingType == "SystemSelected" ? "is-active" : "")">
+                        <a href="/Booking/ResolveAiDestination" class="bundle-btn @(Model.BookingType == "SystemSelected" ? "is-active" : "")">
                             <strong>System-Selected</strong>
                             <small>AI-curated recommendations</small>
                         </a>
@@ -59,7 +59,7 @@
                     {
                         foreach (var spot in (List<TravelSpot>)ViewBag.AllDestinations)
                         {
-                            <a href="/Booking?spotId=@spot.Id&type=UserSelected" class="dest-card">
+                            <a href="/Booking/Index?spotId=@spot.Id&type=UserSelected" class="dest-card">
                                 <img src="@(spot.ImageUrl ?? $"/images/{spot.Id}.jpg")" alt="@spot.Name" />
                                 <div>
                                     <strong>@spot.Name</strong>
