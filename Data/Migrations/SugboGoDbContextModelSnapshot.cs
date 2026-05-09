@@ -149,6 +149,10 @@ namespace SugboGo.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("SelectionType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<decimal>("TaxesAndFees")
                         .HasColumnType("decimal(18,2)");
 

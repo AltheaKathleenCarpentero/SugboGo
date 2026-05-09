@@ -20,6 +20,9 @@ public sealed class Booking
     public TravelSpot? TravelSpot { get; set; }
 
     [Required]
+    public string SelectionType { get; set; } = "UserSelected";
+
+    [Required]
     public string DestinationName { get; set; } = string.Empty;
 
     public string? ImageUrl { get; set; }

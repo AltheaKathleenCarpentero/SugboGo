@@ -344,6 +344,8 @@ const initBookingFlow = () => {
     const panels = [...wizard.querySelectorAll('[data-booking-step]')];
     const indicators = [...wizard.querySelectorAll('[data-step-indicator]')];
     const basePrice = Number(wizard.dataset.basePrice || '0');
+    const destinationId = wizard.dataset.destinationId || '';
+    const bookingType = wizard.dataset.bookingType || 'UserSelected';
     const destination = wizard.dataset.destination || '';
     const location = wizard.dataset.location || 'Cebu, Philippines';
     const imageUrl = wizard.dataset.imageUrl || wizard.querySelector('.booking-hero img')?.src || '';
@@ -359,6 +361,8 @@ const initBookingFlow = () => {
     const confIdDisplay = wizard.querySelector('[data-conf-id]');
 
     const state = {
+        destinationId,
+        bookingType,
         destinationName: destination,
         imageUrl,
         location,
@@ -962,6 +966,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* Booking Modal Logic */
 document.addEventListener('click', (e) => {
+    if (e.target.closest('.dest-card')) {
+        e.target.closest('.booking-modal')?.setAttribute('hidden', '');
+        return;
+    }
+
     if (e.target.closest('[data-modal-open]')) {
         e.preventDefault();
         const id = e.target.closest('[data-modal-open]').getAttribute('href');
