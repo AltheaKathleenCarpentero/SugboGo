@@ -34,7 +34,10 @@ public sealed class AdminOperationsService : IAdminOperationsService
         var users = await _dbContext.Users.ToListAsync(cancellationToken);
         var preferences = await _dbContext.TravelPreferences.ToListAsync(cancellationToken);
         var posts = await _dbContext.DestinationPosts.ToListAsync(cancellationToken);
-        var bookings = await _dbContext.Bookings.OrderByDescending(b => b.CreatedAt).ToListAsync(cancellationToken);
+        var bookings = await GetBookingsAsync(cancellationToken);
+        var gems = await _adminDataStore.GetGemsAsync(cancellationToken);
+        var templates = await _adminDataStore.GetTemplatesAsync(cancellationToken);
+        var partners = await _adminDataStore.GetPartnersAsync(cancellationToken);
         
         var latestUser = users.OrderByDescending(user => user.CreatedAt).FirstOrDefault();
 
@@ -45,6 +48,35 @@ public sealed class AdminOperationsService : IAdminOperationsService
             UrgentAlerts = BuildUrgentAlerts(users, preferences),
             Pipeline = BuildPipeline(bookings, users, preferences),
             Flashpackers = BuildFlashpackers(users, preferences, posts),
+            Gems = gems.Select(gem => new GemAdminViewModel
+            {
+                Name = gem.Name,
+                Category = gem.Category,
+                FlashpackerScore = gem.FlashpackerScore,
+                QualityCheckDate = gem.QualityCheckDate,
+                ContactPerson = gem.ContactPerson,
+                Latitude = gem.Latitude,
+                Longitude = gem.Longitude,
+                Status = gem.Status,
+                MapX = gem.MapX,
+                MapY = gem.MapY
+            }).ToList(),
+            Templates = templates.Select(template => new ItineraryTemplateViewModel
+            {
+                Name = template.Name,
+                Vibe = template.Vibe,
+                Stops = template.Stops,
+                AvgDuration = template.AvgDuration
+            }).ToList(),
+            Partners = partners.Select(partner => new PartnerAdminViewModel
+            {
+                Name = partner.Name,
+                Type = partner.Type,
+                Contact = partner.Contact,
+                Commission = partner.Commission,
+                LastAudit = partner.LastAudit,
+                Status = partner.Status
+            }).ToList(),
             Bookings = bookings.Select(b => new BookingAdminViewModel
             {
                 Id = b.Id,
