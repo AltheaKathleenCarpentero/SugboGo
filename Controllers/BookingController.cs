@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using SugboGo.Data;
 using SugboGo.Models;
 using SugboGo.Services.BookingOptions;
+using SugboGo.Services.Dashboard;
 using SugboGo.Services.Travel;
 
 namespace SugboGo.Controllers;
@@ -15,6 +16,7 @@ public class BookingController : Controller
     private readonly ITravelPreferenceStore _preferenceStore;
     private readonly ICebuRecommendationService _recommendationService;
     private readonly IBookingOptionsService _optionsService;
+    private readonly IUserSavedGemStore _savedGemStore;
     private readonly SugboGoDbContext _dbContext;
     private readonly ILogger<BookingController> _logger;
 
@@ -22,12 +24,14 @@ public class BookingController : Controller
         ITravelPreferenceStore preferenceStore,
         ICebuRecommendationService recommendationService,
         IBookingOptionsService optionsService,
+        IUserSavedGemStore savedGemStore,
         SugboGoDbContext dbContext,
         ILogger<BookingController> logger)
     {
         _preferenceStore = preferenceStore;
         _recommendationService = recommendationService;
         _optionsService = optionsService;
+        _savedGemStore = savedGemStore;
         _dbContext = dbContext;
         _logger = logger;
     }
@@ -153,6 +157,43 @@ public class BookingController : Controller
 
         ViewData["Title"] = spot != null ? $"Book {spot.Name}" : "Choose Your Destination";
         return View(model);
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveFavorite(
+        string destinationId,
+        string title,
+        string category,
+        string neighborhood,
+        string? returnUrl,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return BadRequest();
+        }
+
+        int? travelSpotId = int.TryParse(destinationId, out var parsedId) ? parsedId : null;
+        await _savedGemStore.SaveGemAsync(new SavedGem
+        {
+            UserId = GetUserId(),
+            TravelSpotId = travelSpotId,
+            Title = title.Trim(),
+            Category = string.IsNullOrWhiteSpace(category) ? "Saved destination" : category.Trim(),
+            Neighborhood = neighborhood?.Trim() ?? string.Empty,
+            Note = $"Saved from booking on {DateTime.Today:MMM d, yyyy}."
+        }, cancellationToken);
+
+        TempData["BookingMessage"] = $"{title.Trim()} was saved to your favorites.";
+
+        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return LocalRedirect(returnUrl);
+        }
+
+        return RedirectToAction(nameof(Index), new { spotId = travelSpotId, type = "UserSelected" });
     }
 
     [Authorize]
