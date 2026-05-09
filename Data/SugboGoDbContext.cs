@@ -92,16 +92,8 @@ public sealed class SugboGoDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.UserId);
 
-            // Configure Interests as a comma-separated string for simple relational storage
-            // Npgsql can handle List<string>, but for general SQL compatibility:
-            entity.Property(e => e.Interests)
-                .HasConversion(
-                    v => string.Join(',', v),
-                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
-                .Metadata.SetValueComparer(new ValueComparer<List<string>>(
-                    (c1, c2) => c1 != null && c2 != null && c1.SequenceEqual(c2),
-                    c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
-                    c => c.ToList()));
+            ConfigurePreferenceList(entity.Property(e => e.PlaceInterests));
+            ConfigurePreferenceList(entity.Property(e => e.ActivityInterests));
         });
 
         modelBuilder.Entity<SavedGem>(entity =>
@@ -121,5 +113,17 @@ public sealed class SugboGoDbContext : DbContext
         modelBuilder.Entity<AdminGem>().HasKey(e => e.Id);
         modelBuilder.Entity<ItineraryTemplate>().HasKey(e => e.Id);
         modelBuilder.Entity<AdminPartner>().HasKey(e => e.Id);
+    }
+
+    private static void ConfigurePreferenceList(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<List<string>> property)
+    {
+        property
+            .HasConversion(
+                v => string.Join(',', v),
+                v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
+            .Metadata.SetValueComparer(new ValueComparer<List<string>>(
+                (c1, c2) => c1 != null && c2 != null && c1.SequenceEqual(c2),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => c.ToList()));
     }
 }

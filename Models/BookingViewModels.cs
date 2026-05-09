@@ -5,7 +5,9 @@ namespace SugboGo.Models;
 public sealed class BookingStepViewModel
 {
     public string CurrentStep { get; set; } = "details"; // details, options, review, payment, success
+    public string BookingType { get; set; } = "UserSelected"; // SystemSelected, UserSelected
     public BookingDataViewModel Data { get; set; } = new();
+    public List<RecommendedDestination> RecommendationOptions { get; set; } = [];
     public List<BookingActivityOption> ActivityOptions { get; set; } = [];
     public List<BookingAccommodationOption> AccommodationOptions { get; set; } = [];
     public List<BookingTransportOption> TransportOptions { get; set; } = [];

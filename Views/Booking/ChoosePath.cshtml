@@ -1,0 +1,45 @@
+@{
+    ViewData["Title"] = "Choose Your Journey";
+}
+
+<section class="preference-flow">
+    <div class="preference-shell">
+        <header class="preference-hero lp-reveal">
+            <div style="text-align: center;">
+                <p class="lp-kicker">Step 2 of 4</p>
+                <h1>How do you want to explore Cebu?</h1>
+                <p>Your travel preferences are locked in. Now, decide if you want our AI to craft the perfect match or if you'd prefer to hunt for gems yourself.</p>
+            </div>
+        </header>
+
+        <div class="recommendation-grid lp-reveal">
+            <!-- AI Choice -->
+            <article class="recommendation-card" style="cursor:pointer" onclick="location.href='/Booking/ResolveAiDestination'">
+                <div style="padding: 40px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                    <div style="font-size: 3rem;">✨</div>
+                    <h2>AI-Curated Magic</h2>
+                    <p>We'll analyze your vibe, budget, and interests to pick the <strong>single best destination</strong> for you right now.</p>
+                    <div class="recommendation-card__actions" style="width: 100%;">
+                        <a href="/Booking/ResolveAiDestination" class="booking-primary">Let AI Decide</a>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Manual Choice -->
+            <article class="recommendation-card" style="cursor:pointer" onclick="location.href='/Booking/Index'">
+                <div style="padding: 40px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                    <div style="font-size: 3rem;">🗺️</div>
+                    <h2>Manual Explorer</h2>
+                    <p>Browse our entire curated library of Cebu's hidden gems and <strong>pick the spot</strong> that speaks to you.</p>
+                    <div class="recommendation-card__actions" style="width: 100%;">
+                        <a href="/Booking/Index" class="booking-link-btn" style="justify-content: center; width: 100%;">Browse All Gems</a>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <div class="text-center" style="margin-top: 40px;">
+            <a href="/Booking/Survey" class="sg-btn sg-btn--outline">Modify My Preferences</a>
+        </div>
+    </div>
+</section>

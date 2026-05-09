@@ -9,16 +9,35 @@
         : $"{Model.Preferences.BudgetRange}, {Model.Preferences.TravelPace} pace, adventure {Model.Preferences.AdventureLevel}/5";
 }
 
-<section class="booking-flow" data-booking-wizard data-destination="@Model.Data.DestinationName" data-base-price="@Model.Data.BasePrice" data-image-url="@Model.Data.ImageUrl" data-location="@Model.Data.Location">
+<section class="booking-flow" data-booking-wizard data-destination-id="@Model.Data.DestinationId" data-destination="@Model.Data.DestinationName" data-base-price="@Model.Data.BasePrice" data-image-url="@Model.Data.ImageUrl" data-location="@Model.Data.Location">
     @Html.AntiForgeryToken()
 
     <div class="booking-shell">
         <header class="booking-hero lp-reveal">
             <div class="booking-hero__grid">
                 <div>
-                    <p class="lp-kicker">Secure Cebu booking</p>
+                    @if (Model.BookingType == "SystemSelected")
+                    {
+                        <p class="lp-kicker">AI-Curated Experience ✨</p>
+                        <p class="sg-caption sg-mb-xs">Based on your profile: @profileSummary</p>
+                    }
+                    else
+                    {
+                        <p class="lp-kicker">Secure Flashpacker Experience</p>
+                    }
                     <h1>@Model.Data.DestinationName</h1>
                     <p>@Model.Data.Description</p>
+
+                    <div class="bundle-switcher">
+                        <a href="/Booking?type=SystemSelected" class="bundle-btn @(Model.BookingType == "SystemSelected" ? "is-active" : "")">
+                            <strong>System-Selected</strong>
+                            <small>AI-curated recommendations</small>
+                        </a>
+                        <a href="#user-selected-modal" class="bundle-btn @(Model.BookingType == "UserSelected" ? "is-active" : "")" data-modal-open>
+                            <strong>User-Selected</strong>
+                            <small>Manual destination pick</small>
+                        </a>
+                    </div>
                 </div>
                 <aside class="booking-summary" aria-label="Destination overview">
                     <span>@Model.Data.RatingSummary</span>
@@ -29,43 +48,66 @@
             </div>
         </header>
 
+        <div id="user-selected-modal" class="booking-modal" hidden>
+            <div class="booking-modal__content">
+                <header>
+                    <h3>Choose your next adventure</h3>
+                    <button type="button" data-modal-close>&times;</button>
+                </header>
+                <div class="destination-grid">
+                    @if (ViewBag.AllDestinations != null)
+                    {
+                        foreach (var spot in (List<TravelSpot>)ViewBag.AllDestinations)
+                        {
+                            <a href="/Booking?spotId=@spot.Id&type=UserSelected" class="dest-card">
+                                <img src="@(spot.ImageUrl ?? $"/images/{spot.Id}.jpg")" alt="@spot.Name" />
+                                <div>
+                                    <strong>@spot.Name</strong>
+                                    <small>@spot.Location</small>
+                                </div>
+                            </a>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
         <nav class="booking-progress lp-reveal" aria-label="Booking progress">
-            <span class="is-active" data-step-indicator="config">1. Trip details</span>
+            <span class="is-active" data-step-indicator="config">1. Customize</span>
             <span data-step-indicator="review">2. Review</span>
             <span data-step-indicator="payment">3. Payment</span>
-            <span data-step-indicator="success">4. QR pass</span>
+            <span data-step-indicator="success">4. Get Pass</span>
         </nav>
 
         <section class="booking-stage is-active" data-booking-step="config">
             <div class="journey-layout">
                 <main class="journey-timeline" aria-label="Booking options">
-                    <article class="journey-item">
-                        <div class="journey-item__pin"><span>A</span></div>
+                    <article class="journey-item" data-timeline-step="date">
+                        <div class="journey-item__pin"><span>1</span></div>
                         <div class="journey-item__body">
-                            <div class="journey-item__topline"><span>Travel date</span><strong>Weather-aware</strong></div>
+                            <div class="journey-item__topline"><span>When are you going?</span><strong>Weather-synced</strong></div>
                             <div class="booking-form-grid">
                                 <label>
-                                    <span>Choose a date</span>
+                                    <span>Travel date</span>
                                     <input type="date" name="travelDate" value="@defaultDate" min="@minDate" required />
-                                    <small>Peak indicators and pre-trip weather reminders are attached to the booking record.</small>
                                 </label>
                                 <label>
-                                    <span>Traveler group</span>
+                                    <span>Who's joining?</span>
                                     <select name="travelerType">
-                                        <option value="Solo" data-count="1">Solo</option>
-                                        <option value="Couple" data-count="2">Couple</option>
-                                        <option value="Group" data-count="4">Group</option>
-                                        <option value="Family" data-count="4">Family</option>
+                                        <option value="Solo" data-count="1">Solo Flashpacker</option>
+                                        <option value="Couple" data-count="2">Dynamic Duo</option>
+                                        <option value="Group" data-count="4">Experience Group</option>
+                                        <option value="Family" data-count="4">Modern Family</option>
                                     </select>
                                 </label>
                             </div>
                         </div>
                     </article>
 
-                    <article class="journey-item">
-                        <div class="journey-item__pin"><span>B</span></div>
+                    <article class="journey-item" data-timeline-step="activities">
+                        <div class="journey-item__pin"><span>2</span></div>
                         <div class="journey-item__body">
-                            <div class="journey-item__topline"><span>Activities</span><strong>Add-ons</strong></div>
+                            <div class="journey-item__topline"><span>Experience-driven activities</span><strong>Curated for you</strong></div>
                             <div class="booking-option-list">
                                 @foreach (var activity in Model.ActivityOptions)
                                 {
@@ -75,17 +117,17 @@
                                             <strong>@activity.Name</strong>
                                             <small>@activity.Description</small>
                                         </span>
-                                        <b>PHP @activity.Price.ToString("N0")</b>
+                                        <b>+PHP @activity.Price.ToString("N0")</b>
                                     </label>
                                 }
                             </div>
                         </div>
                     </article>
 
-                    <article class="journey-item">
-                        <div class="journey-item__pin"><span>C</span></div>
+                    <article class="journey-item" data-timeline-step="stay">
+                        <div class="journey-item__pin"><span>3</span></div>
                         <div class="journey-item__body">
-                            <div class="journey-item__topline"><span>Accommodation</span><strong>Stay type</strong></div>
+                            <div class="journey-item__topline"><span>Flashpacker Stays</span><strong>Budget meets Comfort</strong></div>
                             <div class="booking-option-list booking-option-list--media">
                                 @foreach (var stay in Model.AccommodationOptions)
                                 {
@@ -94,19 +136,19 @@
                                         <img src="@stay.ImageUrl" alt="@stay.Name" />
                                         <span>
                                             <strong>@stay.Name</strong>
-                                            <small>@stay.Type · @stay.Amenities · @stay.Distance · @stay.Rating rating</small>
+                                            <small>@stay.Type · @stay.Amenities</small>
                                         </span>
-                                        <b>@(stay.PricePerNight == 0 ? "Included" : $"PHP {stay.PricePerNight:N0}")</b>
+                                        <b>@(stay.PricePerNight == 0 ? "Included" : $"+PHP {stay.PricePerNight:N0}")</b>
                                     </label>
                                 }
                             </div>
                         </div>
                     </article>
 
-                    <article class="journey-item">
-                        <div class="journey-item__pin"><span>D</span></div>
+                    <article class="journey-item" data-timeline-step="transport">
+                        <div class="journey-item__pin"><span>4</span></div>
                         <div class="journey-item__body">
-                            <div class="journey-item__topline"><span>Transportation</span><strong>Route support</strong></div>
+                            <div class="journey-item__topline"><span>Flexible Transport</span><strong>Efficiency first</strong></div>
                             <div class="booking-option-list">
                                 @foreach (var transport in Model.TransportOptions)
                                 {
@@ -116,43 +158,37 @@
                                             <strong>@transport.Name</strong>
                                             <small>@transport.Details</small>
                                         </span>
-                                        <b>@(transport.Price == 0 ? "Included" : $"PHP {transport.Price:N0}")</b>
+                                        <b>@(transport.Price == 0 ? "Included" : $"+PHP {transport.Price:N0}")</b>
                                     </label>
                                 }
                             </div>
                         </div>
                     </article>
 
-                    <article class="journey-item">
-                        <div class="journey-item__pin"><span>E</span></div>
+                    <article class="journey-item" data-timeline-step="notes">
+                        <div class="journey-item__pin"><span>5</span></div>
                         <div class="journey-item__body">
-                            <div class="journey-item__topline"><span>Traveler notes</span><strong>Optional</strong></div>
+                            <div class="journey-item__topline"><span>Final details</span><strong>Anything else?</strong></div>
                             <label class="booking-notes">
-                                <span>Anything we should know before your trip?</span>
-                                <textarea name="travelerNotes" rows="4" placeholder="Vegetarian meals, avoid rough boat rides, anniversary trip, beginner swimmer..."></textarea>
+                                <textarea name="travelerNotes" rows="3" placeholder="Dietary needs, special occasions, or transport preferences..."></textarea>
                             </label>
                             <div class="journey-item__actions">
-                                <span>@profileSummary</span>
-                                <button type="button" class="booking-link-btn" data-goto-step="review">Review booking</button>
+                                <button type="button" class="booking-primary" data-goto-step="review">Review Trip Summary</button>
                             </div>
                         </div>
                     </article>
                 </main>
 
                 <aside class="checkout-panel lp-reveal">
-                    <h2>Live price</h2>
+                    <h2>Live Estimate</h2>
                     <dl>
-                        <div><dt>Base experience</dt><dd>PHP <span data-base-display>@Model.Data.BasePrice.ToString("N0")</span></dd></div>
+                        <div><dt>Base Trip</dt><dd>PHP <span data-base-display>@Model.Data.BasePrice.ToString("N0")</span></dd></div>
                         <div data-add-ons-row hidden><dt>Add-ons</dt><dd>PHP <span data-addons-display>0</span></dd></div>
-                        <div><dt>Taxes and fees</dt><dd>PHP <span data-taxes-display>0</span></dd></div>
-                        <div><dt>Total</dt><dd>PHP <span data-total-display>@Model.Data.BasePrice.ToString("N0")</span></dd></div>
+                        <div><dt>Vat (12%)</dt><dd>PHP <span data-taxes-display>0</span></dd></div>
+                        <div class="total-row"><dt>Total</dt><dd>PHP <span data-total-display>@Model.Data.BasePrice.ToString("N0")</span></dd></div>
                     </dl>
-                    <p>@Model.SmartRecommendations.FirstOrDefault()</p>
-                    <div class="booking-rec-list">
-                        @foreach (var rec in Model.SmartRecommendations.Skip(1))
-                        {
-                            <small>@rec</small>
-                        }
+                    <div class="smart-rec-box">
+                        <p><strong>Flashpacker Tip:</strong> @Model.SmartRecommendations.FirstOrDefault()</p>
                     </div>
                 </aside>
             </div>
@@ -161,19 +197,19 @@
         <section class="booking-stage" data-booking-step="review">
             <div class="journey-layout">
                 <main class="flash-checkout__form">
-                    <h2>Review booking</h2>
+                    <h2>Trip Summary</h2>
                     <div class="review-summary" data-review-summary></div>
                     <div class="journey-item__actions">
-                        <button type="button" class="booking-link-btn" data-goto-step="config">Back to options</button>
-                        <button type="button" class="booking-link-btn" data-goto-step="payment">Proceed to payment</button>
+                        <button type="button" class="booking-link-btn" data-goto-step="config">Edit Details</button>
+                        <button type="button" class="booking-primary" data-goto-step="payment">Secure Payment</button>
                     </div>
                 </main>
                 <aside class="checkout-panel">
-                    <h2>Map and timing</h2>
+                    <h2>Route Explorer</h2>
                     <div class="booking-map">
                         <iframe title="@Model.Data.DestinationName map" src="@Model.Data.MapUrl" loading="lazy"></iframe>
                     </div>
-                    <p>Admin receives this booking instantly after payment confirmation.</p>
+                    <p class="small text-muted">Your itinerary is synced to our local guides instantly upon confirmation.</p>
                 </aside>
             </div>
         </section>
@@ -181,24 +217,42 @@
         <section class="booking-stage" data-booking-step="payment">
             <div class="flash-checkout">
                 <main class="flash-checkout__form">
-                    <h2>Secure payment</h2>
+                    <h2>Digital Payment</h2>
+                    <p class="text-muted">Choose your preferred tech-savvy payment method.</p>
                     <div class="quick-pay">
-                        <button type="button" data-pay-method="GCash">GCash</button>
-                        <button type="button" data-pay-method="Maya">Maya</button>
-                        <button type="button" data-pay-method="Card">Card</button>
-                        <button type="button" data-pay-method="PayPal">PayPal</button>
+                        <button type="button" data-pay-method="GCash">
+                            <i class="payment-icon">G</i>
+                            <span>GCash</span>
+                        </button>
+                        <button type="button" data-pay-method="Maya">
+                            <i class="payment-icon">M</i>
+                            <span>Maya</span>
+                        </button>
+                        <button type="button" data-pay-method="Card">
+                            <i class="payment-icon">C</i>
+                            <span>Card</span>
+                        </button>
+                        <button type="button" data-pay-method="PayPal">
+                            <i class="payment-icon">P</i>
+                            <span>PayPal</span>
+                        </button>
                     </div>
-                    <div class="booking-divider"><span>Encrypted checkout simulation</span></div>
+                    <div class="journey-item__actions" style="margin-top: 2rem;">
+                        <button type="button" class="booking-link-btn" data-goto-step="review">Back</button>
+                        <button type="button" class="booking-primary" id="btn-submit-booking">Complete Booking</button>
+                    </div>
+                    <div class="booking-divider"><span>Encrypted Transaction</span></div>
                     <div class="payment-sim" data-payment-sim hidden>
-                        <p>Processing payment and writing the booking to Supabase PostgreSQL...</p>
+                        <div class="spinner"></div>
+                        <p>Securing your Cebu adventure...</p>
                     </div>
                 </main>
                 <aside class="payment-recap">
-                    <h2>Protection</h2>
-                    <ul>
-                        <li>Secure checkout token attached to the booking.</li>
-                        <li>QR verification code generated after payment.</li>
-                        <li>Digital itinerary appears in the traveler dashboard.</li>
+                    <h2>Flashpacker Protection</h2>
+                    <ul class="check-list">
+                        <li>Instant QR Pass generation</li>
+                        <li>24/7 Digital support access</li>
+                        <li>Flexible rescheduling coordination</li>
                     </ul>
                 </aside>
             </div>
@@ -206,23 +260,29 @@
 
         <section class="booking-stage" data-booking-step="success">
             <div class="success-state">
-                <div class="success-state__copy">
-                    <p class="lp-kicker">Booking confirmed</p>
-                    <h2>Your Cebu trip is locked in.</h2>
-                    <p>Use the QR pass at check-in. The same booking now appears in admin operations and your dashboard.</p>
-                    <a href="/Dashboard" class="booking-primary">Open trip dashboard</a>
+                <header class="success-state__header">
+                    <p class="lp-kicker">Success!</p>
+                    <h2>Pack your bags, @(User.Identity?.Name?.Split(' ')[0] ?? "Traveler").</h2>
+                </header>
+                
+                <div class="digital-pass">
+                    <div class="digital-pass__header">
+                        <span>Digital Pass</span>
+                        <strong>SUGBOGO</strong>
+                    </div>
+                    <div class="digital-pass__body">
+                        <div class="review-item"><strong>ID</strong><span data-conf-id>---</span></div>
+                        <div class="review-item"><strong>Destination</strong><span>@Model.Data.DestinationName</span></div>
+                        <div class="review-item"><strong>Status</strong><span class="text-success">Confirmed</span></div>
+                    </div>
+                    <div class="digital-pass__footer">
+                        <div class="qr-preview" data-qr-code-placeholder></div>
+                        <p class="small text-muted mt-2">Scan at destination for instant check-in</p>
+                    </div>
                 </div>
-                <div class="pass-stack">
-                    <article class="digital-pass">
-                        <div><span>Booking ID</span><strong data-conf-id>Pending</strong></div>
-                        <div class="qr-preview" data-qr-code-placeholder aria-label="QR code preview"></div>
-                    </article>
-                    <article class="digital-pass">
-                        <div><span>Destination</span><strong>@Model.Data.DestinationName</strong></div>
-                    </article>
-                    <article class="digital-pass">
-                        <div><span>Support</span><strong>Weather, checklist, emergency contacts</strong></div>
-                    </article>
+
+                <div class="journey-item__actions">
+                    <a href="/Dashboard" class="booking-primary">View Trip in Dashboard</a>
                 </div>
             </div>
         </section>

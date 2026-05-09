@@ -451,7 +451,7 @@ const initBookingFlow = () => {
 
     const handlePayment = (method) => {
         if (paymentSim) paymentSim.hidden = false;
-        
+
         state.paymentMethod = method;
         renderReview();
 
@@ -464,19 +464,19 @@ const initBookingFlow = () => {
             },
             body: JSON.stringify(state)
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                if (confIdDisplay) confIdDisplay.textContent = data.bookingId.substring(0, 8).toUpperCase();
-                renderQr(data.qrCode || data.bookingId);
-                setTimeout(() => setStep('success'), 1500);
-            }
-        })
-        .catch(() => {
-            if (paymentSim) {
-                paymentSim.innerHTML = '<p>Payment could not be completed. Please try again.</p>';
-            }
-        });
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (confIdDisplay) confIdDisplay.textContent = data.bookingId.substring(0, 8).toUpperCase();
+                    renderQr(data.qrCode || data.bookingId);
+                    setTimeout(() => setStep('success'), 1500);
+                }
+            })
+            .catch(() => {
+                if (paymentSim) {
+                    paymentSim.innerHTML = '<p>Payment could not be completed. Please try again.</p>';
+                }
+            });
     };
 
     const escapeHtml = (value) => String(value)
@@ -689,7 +689,7 @@ const initDashboard = () => {
                         likeButton.classList.add('is-liked');
                         likeCount.textContent = String(data.likes);
                     })
-                    .catch(() => {});
+                    .catch(() => { });
                 return;
             }
 
@@ -710,11 +710,11 @@ const initDashboard = () => {
             const text = `Check out ${destination} on SugboGo.`;
 
             if (navigator.share) {
-                await navigator.share({ title: destination, text }).catch(() => {});
+                await navigator.share({ title: destination, text }).catch(() => { });
                 return;
             }
 
-            await navigator.clipboard?.writeText(text).catch(() => {});
+            await navigator.clipboard?.writeText(text).catch(() => { });
             shareButton.textContent = 'Copied';
             window.setTimeout(() => {
                 shareButton.textContent = 'Share';
@@ -759,7 +759,7 @@ const initDashboard = () => {
 
                         commentInput.value = '';
                     })
-                    .catch(() => {});
+                    .catch(() => { });
                 return;
             }
 
@@ -958,4 +958,19 @@ document.addEventListener('DOMContentLoaded', () => {
     initAccountFlow();
     initDashboard();
     initAdminDashboard();
+});
+
+/* Booking Modal Logic */
+document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-modal-open]')) {
+        e.preventDefault();
+        const id = e.target.closest('[data-modal-open]').getAttribute('href');
+        document.querySelector(id)?.removeAttribute('hidden');
+    }
+    if (e.target.closest('[data-modal-close]')) {
+        e.target.closest('.booking-modal').setAttribute('hidden', '');
+    }
+    if (e.target.classList.contains('booking-modal')) {
+        e.target.setAttribute('hidden', '');
+    }
 });

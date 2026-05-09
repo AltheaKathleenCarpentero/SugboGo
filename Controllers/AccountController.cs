@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using SugboGo.Models;
 using SugboGo.Services.Auth;
+using SugboGo.Services.Travel;
 
 namespace SugboGo.Controllers;
 
@@ -12,12 +13,18 @@ public sealed class AccountController : Controller
     private readonly IUserAccountStore _userStore;
     private readonly IPasswordService _passwordService;
     private readonly IAccountRoleService _accountRoleService;
+    private readonly ITravelPreferenceStore _preferenceStore;
 
-    public AccountController(IUserAccountStore userStore, IPasswordService passwordService, IAccountRoleService accountRoleService)
+    public AccountController(
+        IUserAccountStore userStore,
+        IPasswordService passwordService,
+        IAccountRoleService accountRoleService,
+        ITravelPreferenceStore preferenceStore)
     {
         _userStore = userStore;
         _passwordService = passwordService;
         _accountRoleService = accountRoleService;
+        _preferenceStore = preferenceStore;
     }
 
     [HttpGet]
@@ -84,7 +91,7 @@ public sealed class AccountController : Controller
         }
 
         await SignUserInAsync(user);
-        return RedirectAfterAuthentication(user, model.ReturnUrl);
+        return await RedirectAfterAuthenticationAsync(user, model.ReturnUrl, cancellationToken);
     }
 
     [HttpGet]
@@ -138,7 +145,7 @@ public sealed class AccountController : Controller
         }
 
         await SignUserInAsync(user);
-        return RedirectAfterAuthentication(user, model.ReturnUrl);
+        return await RedirectAfterAuthenticationAsync(user, model.ReturnUrl, cancellationToken);
     }
 
     [HttpGet]
@@ -205,8 +212,18 @@ public sealed class AccountController : Controller
             : RedirectToAction("Index", "Dashboard");
     }
 
-    private IActionResult RedirectAfterAuthentication(UserAccount user, string? returnUrl)
+    private async Task<IActionResult> RedirectAfterAuthenticationAsync(UserAccount user, string? returnUrl, CancellationToken cancellationToken)
     {
+        var role = _accountRoleService.ResolveEffectiveRole(user.Email, user.Role);
+        if (role != AccountRoles.Admin)
+        {
+            var preferences = await _preferenceStore.FindLatestByUserIdAsync(user.Id, cancellationToken);
+            if (preferences is null || preferences.PlaceInterests.Count == 0 || preferences.ActivityInterests.Count == 0)
+            {
+                return RedirectToAction("Survey", "Booking", new { returnUrl });
+            }
+        }
+
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
         {
             return LocalRedirect(returnUrl);
