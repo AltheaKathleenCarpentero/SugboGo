@@ -34,7 +34,7 @@ public sealed class AdminOperationsService : IAdminOperationsService
         var users = await _dbContext.Users.ToListAsync(cancellationToken);
         var preferences = await _dbContext.TravelPreferences.ToListAsync(cancellationToken);
         var posts = await _dbContext.DestinationPosts.ToListAsync(cancellationToken);
-        var bookings = await _dbContext.Bookings.OrderByDescending(b => b.CreatedAt).ToListAsync(cancellationToken);
+        var bookings = await GetBookingsAsync(cancellationToken);
         
         var latestUser = users.OrderByDescending(user => user.CreatedAt).FirstOrDefault();
 

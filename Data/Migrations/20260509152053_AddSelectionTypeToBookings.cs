@@ -1,12 +1,13 @@
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace SugboGo.Data.Migrations
 {
-    [Migration("20260509143000_AddSelectionTypeToBookings")]
+    /// <inheritdoc />
     public partial class AddSelectionTypeToBookings : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
@@ -14,9 +15,10 @@ namespace SugboGo.Data.Migrations
                 table: "Bookings",
                 type: "text",
                 nullable: false,
-                defaultValue: "UserSelected");
+                defaultValue: "");
         }
 
+        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
