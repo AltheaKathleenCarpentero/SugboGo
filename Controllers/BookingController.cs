@@ -60,25 +60,24 @@ public class BookingController : Controller
         return View();
     }
 
-    // STEP 3: The AI Resolver
+    // STEP 3: The AI Resolver — shows ranked recommendations for user to pick from
     [Authorize]
     public async Task<IActionResult> ResolveAiDestination(CancellationToken cancellationToken)
     {
         var userId = GetUserId();
         var preferences = await _preferenceStore.FindLatestByUserIdAsync(userId, cancellationToken);
-        
+
         if (preferences == null) return RedirectToAction(nameof(Survey));
 
         var results = await _recommendationService.BuildRecommendationsAsync(preferences);
-        var bestMatch = results.Recommendations.FirstOrDefault();
 
-        if (bestMatch == null)
+        if (!results.Recommendations.Any())
         {
-            return RedirectToAction(nameof(Index), new { type = "UserSelected" }); 
+            return RedirectToAction(nameof(Index), new { type = "UserSelected" });
         }
 
-        // Redirect to the Wizard with the AI's top pick
-        return RedirectToAction(nameof(Index), new { spotId = bestMatch.Destination.Id, type = "SystemSelected" });
+        ViewData["Title"] = "AI Cebu Recommendations";
+        return View("Recommendations", results);
     }
 
     // STEP 4: The Booking Wizard
